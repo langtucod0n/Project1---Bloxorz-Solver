@@ -1,0 +1,1 @@
+{"version": 1, "id": "L05", "grid": [".F...", ".....", "...FG", ".F..."], "start": [0, 0], "legend": {".": "floor", "#": "void", "G": "goal", "F": "fragile"}, "switches": [], "bridges": []}
