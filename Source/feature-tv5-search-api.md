@@ -64,17 +64,28 @@ Kết luận: chọn **IDS**.
 
 ## A3. Đo kết quả của thuật toán
 
-File `solvers/metrics.py`. Hàm `run_solver(solver, game)` chạy một thuật toán rồi trả về cùng một bảng số liệu, dùng được cho mọi thuật toán:
+File `solvers/metrics.py`. Hàm `run_solver(solver, game)` do TV5 viết, dùng để đo một thuật toán giải đố. Hai công cụ đo là `time.perf_counter` và `tracemalloc` có sẵn trong Python. `Game` là của TV2.
+
+**Đầu vào:**
+
+| Tham số | Ý nghĩa |
+|---|---|
+| `solver` | Hàm giải (BFS, IDS, DFS, UCS, A*...). Nhận `game` và trả về `{"moves": [...] hoặc None, "expanded": số}`. `moves` là các nước đi của lời giải, `expanded` là số trạng thái đã xem xét |
+| `game` | Màn chơi đã nạp, tức đối tượng `Game` của core |
+
+**Đầu ra** là cùng một bảng số liệu cho mọi thuật toán:
 
 | Mục | Ý nghĩa |
 |---|---|
 | `moves` | Các nước đi của lời giải. Là `None` nếu màn không giải được |
-| `expanded` | Số trạng thái đã xem xét |
+| `expanded` | Số trạng thái đã xem xét (lấy từ solver) |
 | `time` | Thời gian giải (giây), đo bằng `time.perf_counter` |
 | `peak_memory` | Bộ nhớ dùng nhiều nhất (byte), đo bằng `tracemalloc` |
-| `length` | Số nước đi của lời giải |
+| `length` | Số nước đi của lời giải. Là `None` nếu không giải được |
 
-Mỗi thuật toán chỉ cần trả về `{"moves": ..., "expanded": ...}`, phần còn lại do `run_solver` tính. Thời gian và bộ nhớ được đo ở hai lần chạy riêng, vì đo bộ nhớ làm chương trình chạy chậm đi, nếu đo cùng lúc thì thời gian sẽ sai.
+**Lưu ý cho người viết thuật toán (TV1):** thuật toán phải tự đếm số trạng thái đã xem xét và trả về `{"moves", "expanded"}`. Thời gian, bộ nhớ và độ dài do `run_solver` tính.
+
+Thời gian và bộ nhớ được đo ở hai lần chạy riêng, vì đo bộ nhớ làm chương trình chạy chậm đi, nếu đo cùng lúc thì thời gian sẽ sai.
 
 ## A4. Máy chủ trung gian (API)
 
