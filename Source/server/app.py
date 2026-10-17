@@ -2,11 +2,12 @@
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from game.game import Game
 from game.level_loader import LevelError, load_level
 from game.state import State, state_to_dict
+from server.runner import SolveTimeout, solve_with_timeout
 from solvers.registry import ALGORITHMS
 
 LEVELS_DIR = Path(__file__).resolve().parent.parent / "levels"
@@ -25,6 +26,7 @@ class MoveRequest(BaseModel):
 class SolveRequest(BaseModel):
     algorithm: str
     level_id: str
+    timeout: float | None = Field(None, gt=0, le=300)  # giây; bỏ trống = mặc định của máy chủ
 
 
 class Session:
@@ -100,10 +102,13 @@ def solve(req: SolveRequest):
     solver = ALGORITHMS[req.algorithm]
     if solver is None:
         raise HTTPException(501, f"Thuật toán {req.algorithm!r} chưa được cài đặt.")
-    from solvers.metrics import run_solver
-
-    _, game = open_level(req.level_id)
-    result = run_solver(solver, game)
+    level, _ = open_level(req.level_id)
+    try:
+        result = solve_with_timeout(req.algorithm, level, req.timeout)
+    except SolveTimeout as e:
+        raise HTTPException(504, str(e)) from e
+    except RuntimeError as e:
+        raise HTTPException(500, f"Solver lỗi: {e}") from e
     moves = result.pop("moves")
     return {
         "algorithm": req.algorithm,

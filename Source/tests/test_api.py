@@ -76,3 +76,12 @@ def test_solve_errors():
 
 def test_switch_control_not_implemented():
     assert client.post("/api/switch_control").status_code == 501
+
+
+def test_solve_timeout_returns_504():
+    r = client.post("/api/solve", json={"algorithm": "bfs", "level_id": "L05", "timeout": 0.001})
+    assert r.status_code == 504
+
+
+def test_solve_rejects_bad_timeout():
+    assert client.post("/api/solve", json={"algorithm": "bfs", "level_id": "L01", "timeout": -1}).status_code == 422
