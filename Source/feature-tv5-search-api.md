@@ -12,7 +12,7 @@ Ký hiệu: `[x]` là đã xong, `[ ]` là chưa xong.
 | A2 | DFS | Xong |
 | A3 | Đo kết quả của thuật toán | Xong |
 | A4 | Máy chủ trung gian (API) | Làm được một phần, chờ TV1, TV3, TV4 |
-| A5 | Đóng gói và chạy | Làm được một phần, chờ TV4 |
+| A5 | Đóng gói và chạy | Xong phần của TV5, chỉ còn matplotlib (TV1) và giao diện `web/` (TV4) |
 | A6 | Video demo | Chưa làm, chỉ có kịch bản nháp |
 
 ---
@@ -108,7 +108,7 @@ Các file: `main.py`, `requirements.txt`, `README.md`.
 - [x] `main.py` bật máy chủ và tự mở trình duyệt. Nếu cổng đang bị dùng thì báo và gợi ý đổi cổng bằng `--port`. Nếu có file `web/index.html` thì máy chủ hiển thị luôn giao diện đó.
 - [x] `requirements.txt` ghi fastapi, uvicorn, httpx, pytest. [ ] matplotlib chưa có, TV1 sẽ thêm khi cần.
 - [x] `README.md` hướng dẫn chạy chỉ bằng hai lệnh `pip install -r requirements.txt` và `python main.py`, kèm cấu trúc thư mục và cách xử lý khi cổng bị chiếm.
-- [ ] **Chưa thử chạy trên máy sạch** (máy khác hoặc môi trường ảo mới). Mới thử trên máy của TV5.
+- [x] **Thử chạy trên máy sạch**: lấy bản sạch của branch, tạo môi trường ảo mới, cài bằng `pip install -r requirements.txt`, chạy `python main.py`. 94 bài kiểm tra đều đạt, `/api/levels`, `/api/solve` và `/docs` trả kết quả đúng. Mới thử trên máy Windows của TV5, chưa thử trên máy khác.
 
 Lưu ý: `main.py` bắt in chữ theo kiểu UTF-8 vì cửa sổ lệnh Windows mặc định không in được tiếng Việt.
 
