@@ -83,6 +83,34 @@ Các file `main.py`, `requirements.txt`, `README.md`.
 
 File `docs/video_script.md` là kịch bản nháp, gồm hai phần theo đề: giao diện và tính năng. Video chưa được quay.
 
+## Kiến trúc backend và link video (cho mục B)
+
+### Giao diện nói chuyện với Python qua đâu
+
+Giao diện 3D chạy trong trình duyệt (JavaScript), còn luật chơi và thuật toán nằm trong Python. Hai bên nói chuyện với nhau qua **máy chủ web FastAPI** bằng các yêu cầu HTTP, dữ liệu gửi đi và nhận về đều ở dạng JSON.
+
+```
+Trình duyệt (giao diện 3D, web/)
+        |  yêu cầu HTTP + JSON  (/api/load, /api/move, /api/solve ...)
+        v
+Máy chủ FastAPI (server/app.py)
+        |  gọi hàm Python
+        v
+game/  (luật chơi)      solvers/  (BFS, DFS, đo kết quả; UCS, A* của TV1)
+```
+
+- Luật chơi và thuật toán chỉ nằm trong Python. Giao diện không tự tính nước đi, mỗi lần đi một nước nó hỏi máy chủ và vẽ lại theo trạng thái nhận về.
+- Máy chủ chỉ làm trung gian: nhận yêu cầu, gọi `game/` và `solvers/`, đổi kết quả sang JSON, báo lỗi bằng mã HTTP.
+- Mỗi lần giải chạy trong một chương trình riêng có giới hạn thời gian, nên một màn quá khó không làm đứng cả máy chủ.
+- `main.py` bật máy chủ, đồng thời phục vụ luôn các file giao diện trong `web/` nên chỉ cần một lệnh để chạy cả hai.
+- Trạng thái ván chơi hiện được giữ trong bộ nhớ của máy chủ (một ván tại một thời điểm), phù hợp với việc một người chơi và một trình duyệt.
+
+Phần này cần TV4 xem lại, vì điểm nối giữa giao diện và máy chủ là điểm chung của hai người.
+
+### Link video
+
+Chưa có, vì video chưa được quay. Sau khi đăng lên YouTube, điền link vào đây: _(chưa có)_
+
 ## Chạy kiểm tra
 
 Từ thư mục `Source`:
