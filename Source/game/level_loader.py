@@ -39,7 +39,94 @@ def validate_level(level: dict) -> dict:
     if legend[grid[sr][sc]] in ("void", "fragile"):
         raise LevelError(f"'start' {start} không được là void hoặc fragile")
 
-    return level  # khóa lạ (switches, bridges, ...) được giữ nguyên, không báo lỗi
+    _validate_bridges_switches(level)
+    return level  # khóa lạ khác được giữ nguyên, không báo lỗi
+
+
+def _is_int(x) -> bool:
+    return isinstance(x, int) and not isinstance(x, bool)
+
+
+def _check_cell(cell, where: str, rows: int, cols: int) -> tuple[int, int]:
+    if (not isinstance(cell, (list, tuple)) or len(cell) != 2
+            or not all(_is_int(x) for x in cell)):
+        raise LevelError(f"{where}: ô phải có dạng [hàng, cột]")
+    r, c = cell
+    if not (0 <= r < rows and 0 <= c < cols):
+        raise LevelError(f"{where}: ô {list(cell)} nằm ngoài bàn")
+    return r, c
+
+
+def _validate_bridges_switches(level: dict) -> None:
+    #Kiểm tra chặt 'bridges' và 'switches' (cả hai tùy chọn; thiếu hoặc [] đều hợp lệ).
+    grid, legend = level["grid"], level["legend"]
+    rows, cols = len(grid), len(grid[0])
+    kind = lambda r, c: legend[grid[r][c]]
+
+    bridges = level.get("bridges", [])
+    if not isinstance(bridges, list):
+        raise LevelError("'bridges' phải là danh sách")
+    bridge_cells: dict[tuple[int, int], int] = {}
+    for i, b in enumerate(bridges):
+        where = f"bridges[{i}]"
+        if not isinstance(b, dict):
+            raise LevelError(f"{where}: phải là đối tượng")
+        if b.get("id") != i or not _is_int(b.get("id")):
+            raise LevelError(f"{where}: 'id' phải là số nguyên, duy nhất và liên tục 0..n-1 (mong đợi {i}, nhận {b.get('id')!r})")
+        if not isinstance(b.get("open"), bool):
+            raise LevelError(f"{where}: 'open' bắt buộc là bool")
+        cs = b.get("cells")
+        if not isinstance(cs, list) or not cs:
+            raise LevelError(f"{where}: 'cells' phải là danh sách không rỗng")
+        for j, cell in enumerate(cs):
+            r, c = _check_cell(cell, f"{where}.cells[{j}]", rows, cols)
+            if kind(r, c) not in ("floor", "void"):
+                raise LevelError(f"{where}.cells[{j}]: ô {[r, c]} trên grid phải là floor hoặc void, không phải {kind(r, c)}")
+            if (r, c) in bridge_cells:
+                raise LevelError(f"{where}.cells[{j}]: ô {[r, c]} đã thuộc cầu {bridge_cells[(r, c)]}")
+            bridge_cells[(r, c)] = i
+
+    switches = level.get("switches", [])
+    if not isinstance(switches, list):
+        raise LevelError("'switches' phải là danh sách")
+    seen: set[tuple[int, int]] = set()
+    for i, sw in enumerate(switches):
+        where = f"switches[{i}]"
+        if not isinstance(sw, dict):
+            raise LevelError(f"{where}: phải là đối tượng")
+        r, c = _check_cell(sw.get("cell"), f"{where}.cell", rows, cols)
+        if kind(r, c) != "floor":
+            raise LevelError(f"{where}: ô công tắc {[r, c]} trên grid phải là floor, không phải {kind(r, c)}")
+        if (r, c) in bridge_cells:
+            raise LevelError(f"{where}: ô công tắc {[r, c]} trùng ô của cầu {bridge_cells[(r, c)]}")
+        if (r, c) in seen:
+            raise LevelError(f"{where}: ô công tắc {[r, c]} trùng công tắc khác")
+        seen.add((r, c))
+
+        t = sw.get("type")
+        if t in ("soft", "heavy"):
+            if sw.get("mode") not in ("toggle", "open", "close", "permanent"):
+                raise LevelError(f"{where}: 'mode' lạ {sw.get('mode')!r}")
+            if "state" in sw and not isinstance(sw["state"], bool):
+                raise LevelError(f"{where}: 'state' phải là bool")
+            tg = sw.get("targets")
+            if not isinstance(tg, list) or not tg:
+                raise LevelError(f"{where}: 'targets' phải là danh sách không rỗng")
+            for t_id in tg:
+                if not _is_int(t_id) or not 0 <= t_id < len(bridges):
+                    raise LevelError(f"{where}: 'targets' trỏ tới cầu không tồn tại: {t_id!r}")
+        elif t == "split":
+            st = sw.get("split_to")
+            if not isinstance(st, list) or len(st) != 2:
+                raise LevelError(f"{where}: 'split_to' phải gồm đúng 2 ô")
+            pts = [_check_cell(p, f"{where}.split_to[{j}]", rows, cols) for j, p in enumerate(st)]
+            if pts[0] == pts[1]:
+                raise LevelError(f"{where}: 'split_to' phải gồm hai ô khác nhau")
+            for p in pts:
+                if kind(*p) != "floor":
+                    raise LevelError(f"{where}: ô split_to {list(p)} trên grid phải là floor, không phải {kind(*p)}")
+        else:
+            raise LevelError(f"{where}: 'type' lạ {t!r}")
 
 
 def load_level(path) -> dict:
