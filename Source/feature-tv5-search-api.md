@@ -11,7 +11,7 @@ Ký hiệu: `[x]` là đã xong, `[ ]` là chưa xong.
 | A1 | BFS | Xong |
 | A2 | DFS | Xong |
 | A3 | Đo kết quả của thuật toán | Xong |
-| A4 | Máy chủ trung gian (API) | Làm được một phần, chờ TV1, TV3, TV4 |
+| A4 | Máy chủ trung gian (API) | Làm được phần không phụ thuộc ai; còn chờ TV1, TV2, TV3, TV4 |
 | A5 | Đóng gói và chạy | Xong phần của TV5, chỉ còn matplotlib (TV1) và giao diện `web/` (TV4) |
 | A6 | Video demo | Chưa làm, chỉ có kịch bản nháp |
 
@@ -69,7 +69,7 @@ File: `solvers/metrics.py`, kiểm tra: `tests/test_metrics.py`.
 | `peak_memory` | Bộ nhớ dùng nhiều nhất (byte) |
 | `length` | Số nước đi của lời giải |
 
-- [ ] Gửi mẫu bảng này cho TV1 và TV4. Tin nhắn đã soạn, chưa gửi.
+- [ ] Gửi mẫu bảng này cho TV1 và TV4. Tin nhắn đã soạn, chưa xác nhận đã gửi.
 
 Mỗi thuật toán chỉ cần trả về `{"moves": ..., "expanded": ...}`, phần còn lại do `run_solver` tính. Thời gian và bộ nhớ được đo ở hai lần chạy riêng, vì đo bộ nhớ làm chương trình chạy chậm đi, nếu đo cùng lúc thì thời gian sẽ sai.
 
