@@ -1,6 +1,6 @@
-# feature/tv5-solvers-api
+# feature/tv5-search-api
 
-Báo cáo phần việc của TV5 trên branch `feature/tv5-solvers-api`, chia theo các mục A1 đến A6 trong file nhiệm vụ để dễ đối chiếu. Các phần ở đây chỉ dùng luật chơi có sẵn trong `game/`, không sửa gì trong đó (xem `README_CORE.md`).
+Báo cáo phần việc của TV5 trên branch `feature/tv5-search-api`, chia theo các mục A1 đến A6 trong file nhiệm vụ để dễ đối chiếu. Các phần ở đây chỉ dùng luật chơi có sẵn trong `game/`, không sửa gì trong đó (xem `README_CORE.md`).
 
 Ký hiệu: `[x]` là đã xong, `[ ]` là chưa xong.
 
