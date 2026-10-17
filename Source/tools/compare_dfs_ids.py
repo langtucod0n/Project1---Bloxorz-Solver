@@ -1,24 +1,25 @@
-"""So sánh BFS, DFS, IDS trên các màn có sẵn: python -m tools.compare_dfs_ids"""
+"""So sánh DFS và IDS trên các màn có sẵn: python -m tools.compare_dfs_ids"""
 import statistics
 import sys
 from pathlib import Path
 
 from game.game import Game
 from game.level_loader import load_level
-from solvers.bfs import bfs
 from solvers.dfs import dfs
 from solvers.ids import ids
 from solvers.metrics import run_solver
 
-SOLVERS = {"BFS": bfs, "DFS": dfs, "IDS": ids}
-REPEATS = 20  # thời gian lấy trung vị để bớt nhiễu (mỗi lần chỉ vài phần nghìn giây)
+SOLVERS = {"DFS": dfs, "IDS": ids}
+REPEATS = 20  # số lần chạy để lấy trung vị (mỗi lần chỉ vài phần nghìn giây)
+WARMUP = 5    # những lần chạy đầu bị nhiễu (bộ nhớ đệm của Python) nên bỏ đi
 LEVELS_DIR = Path(__file__).resolve().parent.parent / "levels"
 
 
 def measure(solver, game):
-    runs = [run_solver(solver, game) for _ in range(REPEATS)]
+    runs = [run_solver(solver, game) for _ in range(REPEATS)][WARMUP:]
     res = dict(runs[0])
     res["time"] = statistics.median(r["time"] for r in runs)
+    res["peak_memory"] = int(statistics.median(r["peak_memory"] for r in runs))
     return res
 
 

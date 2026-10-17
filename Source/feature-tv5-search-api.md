@@ -15,7 +15,7 @@ Cả 5 màn L01 đến L05 đều giải được.
 
 ## A2. IDS (đi sâu dần từng tầng)
 
-File `solvers/ids.py`. Thuật toán chạy tìm kiếm sâu với giới hạn độ sâu 0, rồi 1, rồi 2, ... cho đến khi thấy đích. Vì vậy lời giải tìm được luôn **ngắn nhất**, giống BFS.
+File `solvers/ids.py`. Thuật toán chạy tìm kiếm sâu với giới hạn độ sâu 0, rồi 1, rồi 2, ... cho đến khi thấy đích. Vì thử từng tầng từ nông đến sâu nên lời giải đầu tiên tìm được luôn **ngắn nhất**.
 
 - Mỗi vòng chỉ giữ độ sâu nhỏ nhất đã tới được của từng trạng thái, nên không đi lại một trạng thái bằng đường dài hơn và không bị lặp mãi.
 - Không dùng hàm tự gọi lại chính nó mà dùng ngăn xếp tự tạo, nên không bị lỗi tràn bộ nhớ.
@@ -24,46 +24,43 @@ File `solvers/ids.py`. Thuật toán chạy tìm kiếm sâu với giới hạn 
 
 ### Căn cứ chọn IDS thay vì DFS
 
-Đề cho phép chọn DFS hoặc IDS. Để chọn có căn cứ, BFS, DFS và IDS được chạy trên 5 màn có sẵn bằng `python -m tools.compare_dfs_ids`. Thời gian là trung vị của 20 lần chạy.
+Đề cho phép chọn DFS hoặc IDS. Để chọn có căn cứ, hai thuật toán được chạy trên 5 màn có sẵn bằng `python -m tools.compare_dfs_ids`. Thời gian và bộ nhớ là trung vị của 15 lần chạy (bỏ 5 lần đầu vì bị nhiễu do bộ nhớ đệm của Python).
 
-Lời giải thực tế tìm được (U lên, D xuống, L trái, R phải):
+Lời giải thực tế tìm được (U lên, D xuống, L trái, R phải; số trong ngoặc là số nước):
 
-| Màn | BFS | DFS | IDS |
-|---|---|---|---|
-| L01 | `RDR` (3) | `DRRULDDRULLDRUR` (15) | `RDR` (3) |
-| L02 | `RR` (2) | `RR` (2) | `RR` (2) |
-| L03 | `RRRDDL` (6) | `DDRRRUL` (7) | `RRRDDL` (6) |
-| L04 | `DRRDLUR` (7) | `DDRUULDRDRUULURD` (16) | `DRRDLUR` (7) |
-| L05 | `RRDRDLUR` (8) | `DDRUULDRURURDLLULDDRURRD` (24) | `RRDRDLUR` (8) |
+| Màn | DFS | IDS |
+|---|---|---|
+| L01 | `DRRULDDRULLDRUR` (15) | `RDR` (3) |
+| L02 | `RR` (2) | `RR` (2) |
+| L03 | `DDRRRUL` (7) | `RRRDDL` (6) |
+| L04 | `DDRUULDRDRUULURD` (16) | `DRRDLUR` (7) |
+| L05 | `DDRUULDRURURDLLULDDRURRD` (24) | `RRDRDLUR` (8) |
 
 Số trạng thái đã xem xét / bộ nhớ đỉnh (byte) / thời gian (ms):
 
-| Màn | BFS | DFS | IDS |
-|---|---|---|---|
-| L01 | 10 / 8184 / 0,087 | 25 / 6168 / 0,225 | 19 / 2336 / 0,086 |
-| L02 | 3 / 2264 / 0,017 | 3 / 1664 / 0,017 | 6 / 1696 / 0,025 |
-| L03 | 20 / 4288 / 0,170 | 11 / 3568 / 0,091 | 73 / 4216 / 0,475 |
-| L04 | 51 / 8912 / 0,473 | 20 / 6384 / 0,192 | 183 / 10384 / 1,135 |
-| L05 | 47 / 8264 / 0,434 | 32 / 9600 / 0,301 | 303 / 12352 / 2,069 |
+| Màn | DFS | IDS |
+|---|---|---|
+| L01 | 25 / 6288 / 0,214 | 19 / 2336 / 0,082 |
+| L02 | 3 / 1664 / 0,017 | 6 / 1696 / 0,025 |
+| L03 | 11 / 3568 / 0,089 | 73 / 4216 / 0,460 |
+| L04 | 20 / 6384 / 0,181 | 183 / 10384 / 1,071 |
+| L05 | 32 / 9600 / 0,285 | 303 / 12352 / 1,994 |
 
 Nhận xét từ số liệu:
 
-- **Độ dài lời giải:** IDS luôn ngắn nhất, bằng BFS trên cả 5 màn. DFS dài hơn nhiều, nặng nhất ở L05 (24 nước so với 8). DFS không tối ưu về độ dài.
-- **Công sức tìm kiếm:** DFS xem xét ít trạng thái nhất ở L03, L04, L05 và chạy nhanh nhất (L05: 32 trạng thái, 0,3 ms). IDS tốn nhiều nhất, gấp khoảng 6 lần BFS ở L05 (303 so với 47 trạng thái) vì phải duyệt lại các tầng nông ở mỗi vòng.
-- **Bộ nhớ:** IDS không tiết kiệm hơn BFS trên các màn này (L05: 12352 so với 8264 byte), vì các màn rất nhỏ và bản cài đặt vẫn phải ghi nhớ độ sâu của từng trạng thái trong mỗi vòng. Lợi thế bộ nhớ của IDS chỉ có ý nghĩa trên màn lớn hơn nhiều, mà bộ màn hiện có chưa đủ lớn để kiểm chứng.
+- **Độ dài lời giải:** IDS luôn ngắn hơn hoặc bằng DFS, và ngắn hơn rõ rệt ở L01 (3 so với 15 nước), L04 (7 so với 16) và L05 (8 so với 24). DFS không tối ưu về độ dài.
+- **Công sức tìm kiếm:** DFS xem xét ít trạng thái hơn và chạy nhanh hơn IDS ở L03, L04, L05 (L05: 32 so với 303 trạng thái, 0,3 so với 2,0 ms). IDS tốn nhiều hơn vì phải duyệt lại các tầng nông ở mỗi vòng. Riêng L01, IDS lại ít trạng thái và nhanh hơn DFS.
+- **Bộ nhớ:** hai thuật toán gần nhau trên các màn nhỏ này. IDS thấp hơn ở L01, DFS thấp hơn ở L03, L04, L05. Chưa có màn đủ lớn để thấy khác biệt rõ.
 
 Kết luận: chọn **IDS**.
 
-1. **Lời giải tốt nhất.** IDS cho lời giải ngắn nhất, bằng BFS trên cả 5 màn. DFS dài hơn 2 đến 3 lần ở L01, L04, L05.
-2. **Phù hợp với bài toán.** Mục tiêu của bộ giải là tìm đường đi ít nước nhất. Lời giải dài của DFS không có lợi gì cho người chơi.
-3. **Chi phí chấp nhận được trên các màn hiện có.** IDS xem xét nhiều trạng thái hơn DFS và BFS, nhưng thời gian chỉ khoảng 2 ms ở màn lớn nhất (L05).
+1. **Lời giải tốt hơn.** Mục tiêu của bộ giải là tìm đường đi ít nước nhất. IDS luôn cho lời giải ngắn nhất, còn DFS dài hơn 2 đến 5 lần ở ba màn.
+2. **Chi phí chấp nhận được trên các màn hiện có.** IDS xem xét nhiều trạng thái hơn DFS nhưng thời gian chỉ khoảng 2 ms ở màn lớn nhất (L05).
 
 Điều phải thừa nhận:
 
-- DFS xem xét ít trạng thái hơn và chạy nhanh hơn IDS ở L03, L04, L05 (L05: 32 so với 303 trạng thái). Nếu chỉ cần một lời giải nhanh, không cần ngắn thì DFS có lợi thế.
-- IDS không tiết kiệm bộ nhớ hơn BFS trên các màn này (L05: 12352 so với 8264 byte). Lợi thế bộ nhớ của IDS chỉ có ý nghĩa ở màn lớn hơn nhiều, mà bộ màn hiện có chưa đủ lớn để kiểm chứng.
+- Nếu chỉ cần một lời giải nhanh, không cần ngắn thì DFS có lợi thế (ít trạng thái và nhanh hơn ở L03, L04, L05).
 - Số liệu chỉ lấy từ 5 màn nhỏ, thời gian chỉ vài phần nghìn giây nên chênh lệch nhỏ có thể do nhiễu.
-- Vì IDS cho cùng lời giải với BFS, nên trong bảng so sánh của cả nhóm hai thuật toán này khác nhau chủ yếu ở số trạng thái xem xét, không khác ở độ dài lời giải. DFS vẫn được giữ làm mốc để thấy sự đánh đổi giữa tốc độ và chất lượng lời giải.
 
 ## A3. Đo kết quả của thuật toán
 
@@ -146,7 +143,7 @@ python -m pytest -q                        # chạy toàn bộ 102 bài kiểm t
 python -m pytest tests/test_bfs.py -v      # A1
 python -m pytest tests/test_ids.py -v      # A2 (IDS)
 python -m pytest tests/test_dfs.py -v      # DFS dùng làm mốc so sánh
-python -m tools.compare_dfs_ids            # bảng so sánh BFS, DFS, IDS ở mục A2
+python -m tools.compare_dfs_ids            # bảng so sánh DFS và IDS ở mục A2
 python -m pytest tests/test_metrics.py -v  # A3
 python -m pytest tests/test_api.py -v      # A4
 ```
