@@ -2,6 +2,7 @@
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from game.game import Game
@@ -117,3 +118,9 @@ def solve(req: SolveRequest):
         "moves": moves,
         "metrics": result,
     }
+
+
+# Giao diện 3D (TV4) nằm trong web/; phục vụ cùng máy chủ nếu đã có index.html.
+WEB_DIR = Path(__file__).resolve().parent.parent / "web"
+if (WEB_DIR / "index.html").is_file():
+    app.mount("/", StaticFiles(directory=WEB_DIR, html=True), name="web")
