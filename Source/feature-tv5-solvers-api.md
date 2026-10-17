@@ -1,97 +1,113 @@
 # feature/tv5-solvers-api
 
-Tài liệu này mô tả những phần đã triển khai trên branch `feature/tv5-solvers-api` (TV5: thuật toán tìm kiếm không thông tin, module đo đạc, API backend, đóng gói). Các solver chỉ dùng giao diện `Game` của core engine (xem `README_CORE.md`), không sửa gì trong `game/`.
+Tài liệu này ghi lại những gì đã làm trên branch `feature/tv5-solvers-api` (phần việc của TV5). Các phần ở đây chỉ dùng luật chơi có sẵn trong `game/`, không sửa gì trong đó (xem `README_CORE.md`).
 
-## Các tính năng đã triển khai
+## Đã làm được gì
 
-### Module đo đạc
+### 1. Đo kết quả của thuật toán
 
-`solvers/metrics.py` cung cấp hàm `run_solver(solver, game)` dùng chung cho mọi solver.
+File `solvers/metrics.py` có hàm `run_solver(solver, game)`. Hàm này chạy một thuật toán giải đố rồi trả về cùng một bảng số liệu, dùng được cho mọi thuật toán:
 
-Quy ước solver: `solver(game) -> {"moves": list[str] | None, "expanded": int}`, trong đó `moves` là `None` nếu màn không có lời giải và `expanded` là số node được lấy ra để mở rộng.
-
-`run_solver` bọc solver và trả về cấu trúc kết quả thống nhất:
-
-| Trường | Ý nghĩa |
+| Mục | Ý nghĩa |
 |---|---|
-| `moves` | Danh sách nước đi của lời giải, `None` nếu không có lời giải |
-| `expanded` | Số node đã mở rộng |
-| `time` | Thời gian tìm kiếm (giây), đo bằng `time.perf_counter` |
-| `peak_memory` | Bộ nhớ đỉnh (byte), đo bằng `tracemalloc` |
-| `length` | Số nước đi của lời giải, `None` nếu không có lời giải |
+| `moves` | Các nước đi của lời giải. Là `None` nếu màn không giải được |
+| `expanded` | Số trạng thái thuật toán đã xem xét |
+| `time` | Thời gian giải (giây) |
+| `peak_memory` | Bộ nhớ dùng nhiều nhất (byte) |
+| `length` | Số nước đi của lời giải |
 
-Vì `tracemalloc` làm chương trình chậm đáng kể, thời gian và bộ nhớ được đo ở **hai lần chạy riêng** để thời gian không bị méo.
+Mỗi thuật toán chỉ cần trả về `{"moves": ..., "expanded": ...}`, phần còn lại do `run_solver` tính. Thời gian và bộ nhớ được đo ở hai lần chạy riêng, vì đo bộ nhớ làm chương trình chạy chậm đi, nếu đo cùng lúc thì thời gian sẽ sai.
 
-### BFS
+### 2. BFS (tìm theo từng lớp)
 
-`solvers/bfs.py` triển khai tìm kiếm theo chiều rộng bằng `collections.deque`. Một từ điển `parent` đóng vai trò đồng thời là tập `visited` và là nơi lưu cha của mỗi trạng thái để dựng lại đường đi. BFS cho lời giải **ngắn nhất theo số nước đi**.
+File `solvers/bfs.py`. Thuật toán thử hết các nước đi một bước, rồi hai bước, rồi ba bước... nên lời giải tìm được luôn **ngắn nhất**. Nó ghi nhớ các trạng thái đã đi qua để không đi lại.
 
-### DFS
+### 3. DFS (đi sâu hết mức rồi mới quay lại)
 
-`solvers/dfs.py` triển khai tìm kiếm theo chiều sâu:
+File `solvers/dfs.py`. Thuật toán đi theo một hướng đến khi hết đường mới quay lại thử hướng khác.
 
-- dùng stack tự tạo, **không đệ quy**, nên không tràn stack;
-- có tập `visited` nên không lặp vô hạn;
-- tham số tùy chọn `max_depth` (mặc định không giới hạn) dùng để cắt nhánh quá sâu;
-- đẩy các hành động theo thứ tự ngược để nước đầu tiên theo thứ tự `U, D, L, R` được thử trước.
+- Cũng ghi nhớ trạng thái đã đi qua nên không bị lặp mãi.
+- Không dùng hàm tự gọi lại chính nó, nên không bị lỗi tràn bộ nhớ.
+- Có thể đặt giới hạn độ sâu bằng `max_depth`. Mặc định là không giới hạn.
+- Lời giải thường dài hơn mức cần thiết. Báo cáo cần ghi rõ nhóm chọn DFS (không chọn IDS).
 
-DFS thường cho lời giải dài và không tối ưu. Lựa chọn DFS (thay vì IDS) cần được ghi rõ trong báo cáo.
+### 4. Máy chủ trung gian (API)
 
-### API backend
+File `server/app.py` là cầu nối giữa giao diện 3D và phần Python. Giao diện gửi yêu cầu đến đây, máy chủ gọi luật chơi và các thuật toán rồi trả kết quả. Máy chủ không tự chứa luật chơi.
 
-`server/app.py` (FastAPI) là cầu nối giữa giao diện 3D và Python. Máy chủ chỉ gọi vào `game/` và `solvers/`, không chứa luật chơi.
+| Yêu cầu | Việc làm |
+|---|---|
+| `GET /api/levels` | Lấy danh sách màn |
+| `POST /api/load` | Mở một màn, trả về bàn chơi và vị trí khối ban đầu |
+| `POST /api/move` | Đi một nước (`U`, `D`, `L`, `R`), trả về vị trí mới và đang chơi, thắng hay thua |
+| `POST /api/solve` | Cho máy tự giải bằng `bfs`, `dfs`, `ucs` hoặc `astar`, trả về lời giải và bảng số liệu |
+| `POST /api/switch_control` | Đổi khối điều khiển. Chưa dùng được, trả về lỗi 501 |
 
-- `GET /api/levels`, `POST /api/load`, `POST /api/move`, `POST /api/solve`, `POST /api/switch_control`. Định dạng chi tiết nằm trong `README.md`.
-- `solvers/registry.py` ánh xạ tên thuật toán (`bfs`, `dfs`, `ucs`, `astar`) sang solver. UCS và A* của TV1 được nạp lười từ `solvers/ucs.py` và `solvers/astar.py`; chưa có file thì API trả 501.
-- `/api/move` trả trạng thái thô khi khối rơi (`status = LOST`) để giao diện vẽ hoạt ảnh; ván giữ nguyên ở vị trí trước.
-- `level_id` chỉ chấp nhận tên file màn, chặn đường dẫn kiểu `../`.
-- Xử lý lỗi bằng mã HTTP: 400, 404, 409, 422, 500, 501, 504.
+Một số điểm cần biết:
 
-`server/runner.py` chạy mỗi lần giải trong một **tiến trình riêng** (`multiprocessing`, chế độ `spawn`). Khi quá thời gian (mặc định 10 giây, đổi bằng `BLOXORZ_SOLVE_TIMEOUT` hoặc tham số `timeout` của request) tiến trình bị dừng hẳn và API trả 504, nên máy chủ không bị treo trên màn quá khó.
+- Khi khối rơi, `/api/move` vẫn trả về vị trí lúc rơi để giao diện vẽ khối rơi. Ván chơi vẫn giữ ở vị trí trước đó.
+- Tên màn chỉ được là tên file màn, để không ai truy cập được file khác trên máy.
+- Khi có lỗi, máy chủ trả mã lỗi rõ ràng để giao diện hiện thông báo: 400 (gửi sai hướng hoặc sai tên thuật toán), 404 (không có màn đó), 409 (chưa mở màn hoặc ván đã xong), 422 (dữ liệu gửi sai dạng), 500 (thuật toán bị lỗi), 501 (chưa làm), 504 (giải quá lâu).
+- File `solvers/registry.py` ghi tên từng thuật toán. UCS và A* của TV1 sẽ tự được dùng khi có file `solvers/ucs.py` (hàm `ucs`) và `solvers/astar.py` (hàm `astar`). Chưa có thì trả về lỗi 501.
 
-### Đóng gói
+### 5. Giới hạn thời gian giải
 
-`main.py` khởi động máy chủ bằng uvicorn và tự mở trình duyệt. Nếu cổng bị chiếm thì báo và gợi ý `--port` khác. Nếu `web/index.html` tồn tại thì được phục vụ tại `/`. Script ép stdout sang UTF-8 vì console Windows (cp1252) không in được tiếng Việt. `README.md` hướng dẫn chạy dự án bằng đúng hai lệnh `pip install -r requirements.txt` và `python main.py`.
+File `server/runner.py` cho mỗi lần giải chạy trong một chương trình riêng. Nếu quá thời gian (mặc định 10 giây), chương trình đó bị tắt hẳn và máy chủ trả lỗi 504, nên máy chủ không bị đứng khi gặp màn quá khó. Có thể đổi thời gian bằng biến `BLOXORZ_SOLVE_TIMEOUT` hoặc thêm `timeout` vào yêu cầu giải.
 
-## So sánh BFS và DFS trên các màn có sẵn
+### 6. Cách chạy dự án
 
-Độ dài lời giải và số node mở rộng:
+- `main.py` bật máy chủ và tự mở trình duyệt. Nếu cổng đang bị dùng thì báo và gợi ý đổi cổng bằng `--port`.
+- Nếu có file `web/index.html` thì máy chủ hiển thị luôn giao diện đó.
+- `main.py` bắt in chữ theo kiểu UTF-8 vì cửa sổ lệnh Windows mặc định không in được tiếng Việt.
+- `README.md` hướng dẫn chạy chỉ bằng hai lệnh: `pip install -r requirements.txt` và `python main.py`.
+- `docs/video_script.md` là kịch bản nháp cho video demo.
+
+## So sánh BFS và DFS trên 5 màn có sẵn
+
+Số nước của lời giải và số trạng thái đã xem xét:
 
 | Màn | BFS | DFS |
 |---|---|---|
-| L01 | 3 nước, 10 node | 15 nước, 25 node |
-| L02 | 2 nước, 3 node | 2 nước, 3 node |
-| L03 | 6 nước, 20 node | 7 nước, 11 node |
-| L04 | 7 nước, 51 node | 16 nước, 20 node |
-| L05 | 8 nước, 47 node | 24 nước, 32 node |
+| L01 | 3 nước, 10 trạng thái | 15 nước, 25 trạng thái |
+| L02 | 2 nước, 3 trạng thái | 2 nước, 3 trạng thái |
+| L03 | 6 nước, 20 trạng thái | 7 nước, 11 trạng thái |
+| L04 | 7 nước, 51 trạng thái | 16 nước, 20 trạng thái |
+| L05 | 8 nước, 47 trạng thái | 24 nước, 32 trạng thái |
 
-DFS cho lời giải dài hơn rõ rệt nhưng thường mở rộng ít node hơn.
+DFS cho lời giải dài hơn nhiều nhưng thường xem xét ít trạng thái hơn.
 
-## Chạy kiểm thử
+## Chạy kiểm tra
 
 Từ thư mục `Source`:
 
 ```bash
 pip install -r requirements.txt
-python -m pytest -q                    # toàn bộ 94 test
-python -m pytest tests/test_bfs.py -v  # BFS
-python -m pytest tests/test_dfs.py -v  # DFS
-python -m pytest tests/test_metrics.py -v  # metrics
-python -m pytest tests/test_api.py -v  # API
+python -m pytest -q                        # chạy toàn bộ 94 bài kiểm tra
+python -m pytest tests/test_bfs.py -v      # BFS
+python -m pytest tests/test_dfs.py -v      # DFS
+python -m pytest tests/test_metrics.py -v  # đo kết quả
+python -m pytest tests/test_api.py -v      # máy chủ
 ```
 
-Các test bao quát: giải được cả 5 màn tích hợp sẵn, lời giải phát lại đúng bằng `Game.result` và kết thúc ở ô đích, màn không có lời giải vẫn dừng, BFS cho lời giải ngắn nhất, `max_depth` của DFS, cấu trúc kết quả và bộ nhớ đỉnh của `run_solver`, các endpoint API (nạp màn, đi một nước, thắng/thua, màn không tồn tại, hướng sai, timeout 504).
+Các bài kiểm tra xem:
 
-## Trạng thái xác minh hiện tại
+- Cả 5 màn có sẵn đều giải được, và đi theo lời giải thì thật sự đến được đích.
+- Màn không giải được thì thuật toán vẫn dừng.
+- BFS luôn cho lời giải ngắn nhất, DFS không bao giờ ngắn hơn BFS.
+- `max_depth` của DFS cắt đúng.
+- Bảng số liệu của `run_solver` đủ mục và đúng.
+- Máy chủ: mở màn, đi một nước, thắng, thua, màn không có, hướng sai, giải quá giờ.
 
-- 94 bài kiểm thử pytest vượt qua;
-- đã chạy thật `python main.py` và gọi `/api/levels`, `/api/solve` bằng curl; cổng bị chiếm được báo đúng;
-- BFS và DFS đều giải được cả 5 màn L01–L05;
-- lời giải DFS không bao giờ ngắn hơn lời giải BFS.
+## Đã kiểm tra những gì
 
-## Chưa triển khai
+- 94 bài kiểm tra đều đạt.
+- BFS và DFS đều giải được cả 5 màn L01 đến L05.
+- Đã chạy thật `python main.py` và gọi thử `/api/levels`, `/api/solve` bằng curl, kết quả đúng. Khi cổng bị dùng, chương trình báo đúng.
 
-- `POST /api/switch_control` trả 501 vì `Game` chưa có cơ chế tách khối (TV3);
-- UCS và A* (TV1): API sẽ tự dùng khi có `solvers/ucs.py` (hàm `ucs`) và `solvers/astar.py` (hàm `astar`) dạng `solver(game) -> {"moves", "expanded"}`;
-- chưa thử trên máy sạch và chưa có giao diện `web/` (TV4);
-- video demo (kịch bản nháp ở `docs/video_script.md`).
+## Chưa làm
+
+- `POST /api/switch_control` (đổi khối điều khiển): chờ TV3 làm cơ chế tách khối.
+- UCS và A* (TV1): chờ TV1 thêm file, dạng `solver(game) -> {"moves", "expanded"}`.
+- Giao diện 3D trong `web/` (TV4).
+- Chưa thử chạy trên máy sạch.
+- Quay video demo (kịch bản nháp ở `docs/video_script.md`).
