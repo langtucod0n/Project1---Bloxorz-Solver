@@ -71,7 +71,7 @@ Làm hai thuật toán cơ bản (20đ), module đo 4 số liệu dùng chung ch
 - Mô tả module đo đạc và cách đo bộ nhớ. **Đã làm**, nằm ở mục A3 của `Source/feature-tv5-search-api.md`. Không cần chờ ai.
 - Phần hướng dẫn chạy và kiến trúc backend (cùng TV4).
   - Hướng dẫn chạy: **Đã làm**, nằm ở `Source/README.md` và mục A5 của `Source/feature-tv5-search-api.md`.
-  - Kiến trúc backend: **Chưa làm.** Cần chờ TV4 chốt endpoint và JSON, rồi nối giao diện với máy chủ, thì mới viết đúng và làm cùng TV4 được.
+  - Kiến trúc backend: **Đã viết bản nháp**, nằm ở mục A4 của `Source/feature-tv5-search-api.md`. **Còn chờ TV4** xem lại và chốt endpoint, JSON, nối giao diện thì mới coi là xong (đề bài ghi làm cùng TV4).
 - Link video. **Chưa làm.** Cần chờ giao diện của TV4, ô công tắc và cầu của TV3, UCS và A* của TV1 xong, rồi mới quay và đăng YouTube được.
 
 ## C. Mốc thời gian
