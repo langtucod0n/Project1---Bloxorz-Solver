@@ -67,34 +67,12 @@ Làm hai thuật toán cơ bản (20đ), module đo 4 số liệu dùng chung ch
 - [ ] Dành đủ thời gian: quay thử 1 lần trước, để TV4 chỉnh giao diện, rồi quay bản cuối vào tuần 3. **(chưa làm)**
 
 ## B. Phần báo cáo của bạn
-- Mô tả BFS, DFS/IDS (cách xử lý trạng thái lặp). **(xong, có trong Source/feature-tv5-search-api.md)**
-- Mô tả module đo đạc và cách đo bộ nhớ. **(xong, có trong Source/feature-tv5-search-api.md)**
-- Phần hướng dẫn chạy và kiến trúc backend (cùng TV4). **(hướng dẫn chạy xong ở Source/README.md; kiến trúc backend viết bên dưới, cần TV4 xem lại)**
-- Link video. **(chưa có, chờ quay và đăng video)**
-
-### Kiến trúc backend (nội dung cho báo cáo)
-
-Giao diện 3D chạy trong trình duyệt (JavaScript), còn luật chơi và thuật toán nằm trong Python. Hai bên nói chuyện với nhau qua **máy chủ web FastAPI** bằng các yêu cầu HTTP, dữ liệu gửi đi và nhận về đều ở dạng JSON.
-
-```
-Trình duyệt (giao diện 3D, web/)
-        |  yêu cầu HTTP + JSON  (/api/load, /api/move, /api/solve ...)
-        v
-Máy chủ FastAPI (server/app.py)
-        |  gọi hàm Python
-        v
-game/  (luật chơi)      solvers/  (BFS, DFS, đo kết quả; UCS, A* của TV1)
-```
-
-- Luật chơi và thuật toán chỉ nằm trong Python. Giao diện không tự tính nước đi, mỗi lần đi một nước nó hỏi máy chủ và vẽ lại theo trạng thái nhận về.
-- Máy chủ chỉ làm trung gian: nhận yêu cầu, gọi `game/` và `solvers/`, đổi kết quả sang JSON, báo lỗi bằng mã HTTP.
-- Mỗi lần giải chạy trong một chương trình riêng có giới hạn thời gian, nên một màn quá khó không làm đứng cả máy chủ.
-- `main.py` bật máy chủ và phục vụ luôn các file giao diện trong `web/`, nên chỉ cần một lệnh để chạy cả hai.
-- Trạng thái ván chơi được giữ trong bộ nhớ của máy chủ (một ván tại một thời điểm), phù hợp với một người chơi và một trình duyệt.
-
-### Link video
-
-_(chưa có, điền link YouTube vào đây sau khi quay và đăng)_
+- Mô tả BFS, DFS/IDS (cách xử lý trạng thái lặp). **Đã làm**, nằm ở mục A1 và A2 của `Source/feature-tv5-search-api.md`. Không cần chờ ai.
+- Mô tả module đo đạc và cách đo bộ nhớ. **Đã làm**, nằm ở mục A3 của `Source/feature-tv5-search-api.md`. Không cần chờ ai.
+- Phần hướng dẫn chạy và kiến trúc backend (cùng TV4).
+  - Hướng dẫn chạy: **Đã làm**, nằm ở `Source/README.md` và mục A5 của `Source/feature-tv5-search-api.md`.
+  - Kiến trúc backend: **Chưa làm.** Cần chờ TV4 chốt endpoint và JSON, rồi nối giao diện với máy chủ, thì mới viết đúng và làm cùng TV4 được.
+- Link video. **Chưa làm.** Cần chờ giao diện của TV4, ô công tắc và cầu của TV3, UCS và A* của TV1 xong, rồi mới quay và đăng YouTube được.
 
 ## C. Mốc thời gian
 
