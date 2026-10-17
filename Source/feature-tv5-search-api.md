@@ -17,22 +17,46 @@ Cả 5 màn L01 đến L05 đều giải được.
 
 File `solvers/dfs.py`. Thuật toán đi theo một hướng đến khi hết đường mới quay lại thử hướng khác.
 
-- Nhóm chọn DFS, không chọn IDS. Lý do: DFS cho lời giải khác BFS rõ rệt nên so sánh giữa hai thuật toán có ý nghĩa, còn IDS cho kết quả gần như trùng BFS.
 - Ghi nhớ trạng thái đã đi qua nên không bị lặp mãi.
 - Không dùng hàm tự gọi lại chính nó mà dùng ngăn xếp tự tạo, nên không bị lỗi tràn bộ nhớ.
 - Có thể đặt giới hạn độ sâu bằng `max_depth`. Mặc định là không giới hạn.
 
-Lời giải của DFS thường dài và không tối ưu. So sánh trên 5 màn có sẵn (số nước của lời giải, số trạng thái đã xem xét):
+### Chọn DFS hay IDS
 
-| Màn | BFS | DFS |
-|---|---|---|
-| L01 | 3 nước, 10 trạng thái | 15 nước, 25 trạng thái |
-| L02 | 2 nước, 3 trạng thái | 2 nước, 3 trạng thái |
-| L03 | 6 nước, 20 trạng thái | 7 nước, 11 trạng thái |
-| L04 | 7 nước, 51 trạng thái | 16 nước, 20 trạng thái |
-| L05 | 8 nước, 47 trạng thái | 24 nước, 32 trạng thái |
+Đề cho phép chọn một trong hai. IDS (`solvers/ids.py`) chạy DFS với giới hạn độ sâu 0, 1, 2, ... đến khi thấy đích. Để chọn có căn cứ, cả ba thuật toán BFS, DFS, IDS được chạy trên 5 màn có sẵn bằng `python -m tools.compare_dfs_ids`. Số liệu thời gian là trung vị của 20 lần chạy. IDS chỉ được cài để so sánh, không nối vào API.
 
-DFS cho lời giải dài hơn nhiều (ví dụ L01: 15 nước so với 3 nước) nhưng thường xem xét ít trạng thái hơn.
+Lời giải thực tế tìm được (U lên, D xuống, L trái, R phải):
+
+| Màn | BFS | DFS | IDS |
+|---|---|---|---|
+| L01 | `RDR` (3) | `DRRULDDRULLDRUR` (15) | `RDR` (3) |
+| L02 | `RR` (2) | `RR` (2) | `RR` (2) |
+| L03 | `RRRDDL` (6) | `DDRRRUL` (7) | `RRRDDL` (6) |
+| L04 | `DRRDLUR` (7) | `DDRUULDRDRUULURD` (16) | `DRRDLUR` (7) |
+| L05 | `RRDRDLUR` (8) | `DDRUULDRURURDLLULDDRURRD` (24) | `RRDRDLUR` (8) |
+
+Số trạng thái đã xem xét / bộ nhớ đỉnh (byte) / thời gian (ms):
+
+| Màn | BFS | DFS | IDS |
+|---|---|---|---|
+| L01 | 10 / 8184 / 0,087 | 25 / 6168 / 0,225 | 19 / 2336 / 0,086 |
+| L02 | 3 / 2264 / 0,017 | 3 / 1664 / 0,017 | 6 / 1696 / 0,025 |
+| L03 | 20 / 4288 / 0,170 | 11 / 3568 / 0,091 | 73 / 4216 / 0,475 |
+| L04 | 51 / 8912 / 0,473 | 20 / 6384 / 0,192 | 183 / 10384 / 1,135 |
+| L05 | 47 / 8264 / 0,434 | 32 / 9600 / 0,301 | 303 / 12352 / 2,069 |
+
+Nhận xét từ số liệu:
+
+- **Độ dài lời giải:** IDS luôn ngắn nhất, bằng BFS trên cả 5 màn. DFS dài hơn nhiều, nặng nhất ở L05 (24 nước so với 8). DFS không tối ưu về độ dài.
+- **Công sức tìm kiếm:** DFS xem xét ít trạng thái nhất ở L03, L04, L05 và chạy nhanh nhất (L05: 32 trạng thái, 0,3 ms). IDS tốn nhiều nhất, gấp khoảng 6 lần BFS ở L05 (303 so với 47 trạng thái) vì phải duyệt lại các tầng nông ở mỗi vòng.
+- **Bộ nhớ:** IDS không tiết kiệm hơn BFS trên các màn này (L05: 12352 so với 8264 byte), vì các màn rất nhỏ và bản cài đặt vẫn phải ghi nhớ độ sâu của từng trạng thái trong mỗi vòng. Lợi thế bộ nhớ của IDS chỉ có ý nghĩa trên màn lớn hơn nhiều, mà bộ màn hiện có chưa đủ lớn để kiểm chứng.
+
+Kết luận: chọn **DFS**. Đây không phải vì DFS cho lời giải tốt nhất, mà vì hai lý do sau:
+
+1. IDS cho đúng lời giải của BFS, chỉ tốn thêm công sức, nên đặt cạnh BFS thì không có thêm gì để so sánh. DFS thì cho kết quả khác hẳn (nhanh nhất nhưng lời giải dài và không tối ưu), giúp bảng so sánh thuật toán của nhóm thể hiện rõ sự đánh đổi giữa tốc độ và chất lượng lời giải.
+2. Nhóm đã có BFS (và UCS, A* của TV1) làm thuật toán cho lời giải ngắn nhất, nên không cần thêm một thuật toán nữa cho mục tiêu đó.
+
+Hạn chế của kết luận: số liệu chỉ lấy từ 5 màn nhỏ, thời gian chỉ khoảng vài phần nghìn giây nên chênh lệch nhỏ có thể do nhiễu. Nếu mục tiêu của nhóm là có một thuật toán không thông tin thứ hai cho lời giải ngắn nhất thì IDS là lựa chọn tốt hơn DFS theo số liệu trên.
 
 ## A3. Đo kết quả của thuật toán
 
@@ -111,9 +135,11 @@ Từ thư mục `Source`:
 
 ```bash
 pip install -r requirements.txt
-python -m pytest -q                        # chạy toàn bộ 94 bài kiểm tra
+python -m pytest -q                        # chạy toàn bộ 100 bài kiểm tra
 python -m pytest tests/test_bfs.py -v      # A1
 python -m pytest tests/test_dfs.py -v      # A2
+python -m pytest tests/test_ids.py -v      # A2 (IDS, chỉ để so sánh)
+python -m tools.compare_dfs_ids            # bảng so sánh BFS, DFS, IDS ở mục A2
 python -m pytest tests/test_metrics.py -v  # A3
 python -m pytest tests/test_api.py -v      # A4
 ```
@@ -129,7 +155,7 @@ Các bài kiểm tra xem:
 
 ## Trạng thái kiểm tra hiện tại
 
-- 94 bài kiểm tra đều đạt.
+- 100 bài kiểm tra đều đạt.
 - BFS và DFS đều giải được cả 5 màn L01 đến L05.
 - Đã chạy thật `python main.py` và gọi thử bằng curl, kể cả trong môi trường ảo mới. Khi cổng bị dùng, chương trình báo đúng.
 - Mới thử trên máy Windows của TV5, chưa thử trên máy khác.
