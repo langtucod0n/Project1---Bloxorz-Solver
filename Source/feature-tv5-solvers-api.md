@@ -1,6 +1,6 @@
 # feature/tv5-solvers-api
 
-Tài liệu này mô tả những phần đã triển khai trên branch `feature/tv5-solvers-api` (TV5: thuật toán tìm kiếm không thông tin, module đo đạc). Các solver chỉ dùng giao diện `Game` của core engine (xem `README_CORE.md`), không sửa gì trong `game/`.
+Tài liệu này mô tả những phần đã triển khai trên branch `feature/tv5-solvers-api` (TV5: thuật toán tìm kiếm không thông tin, module đo đạc, API backend, đóng gói). Các solver chỉ dùng giao diện `Game` của core engine (xem `README_CORE.md`), không sửa gì trong `game/`.
 
 ## Các tính năng đã triển khai
 
@@ -37,6 +37,22 @@ Vì `tracemalloc` làm chương trình chậm đáng kể, thời gian và bộ 
 
 DFS thường cho lời giải dài và không tối ưu. Lựa chọn DFS (thay vì IDS) cần được ghi rõ trong báo cáo.
 
+### API backend
+
+`server/app.py` (FastAPI) là cầu nối giữa giao diện 3D và Python. Máy chủ chỉ gọi vào `game/` và `solvers/`, không chứa luật chơi.
+
+- `GET /api/levels`, `POST /api/load`, `POST /api/move`, `POST /api/solve`, `POST /api/switch_control`. Định dạng chi tiết nằm trong `README.md`.
+- `solvers/registry.py` ánh xạ tên thuật toán (`bfs`, `dfs`, `ucs`, `astar`) sang solver. UCS và A* của TV1 được nạp lười từ `solvers/ucs.py` và `solvers/astar.py`; chưa có file thì API trả 501.
+- `/api/move` trả trạng thái thô khi khối rơi (`status = LOST`) để giao diện vẽ hoạt ảnh; ván giữ nguyên ở vị trí trước.
+- `level_id` chỉ chấp nhận tên file màn, chặn đường dẫn kiểu `../`.
+- Xử lý lỗi bằng mã HTTP: 400, 404, 409, 422, 500, 501, 504.
+
+`server/runner.py` chạy mỗi lần giải trong một **tiến trình riêng** (`multiprocessing`, chế độ `spawn`). Khi quá thời gian (mặc định 10 giây, đổi bằng `BLOXORZ_SOLVE_TIMEOUT` hoặc tham số `timeout` của request) tiến trình bị dừng hẳn và API trả 504, nên máy chủ không bị treo trên màn quá khó.
+
+### Đóng gói
+
+`main.py` khởi động máy chủ bằng uvicorn và tự mở trình duyệt. Nếu cổng bị chiếm thì báo và gợi ý `--port` khác. Nếu `web/index.html` tồn tại thì được phục vụ tại `/`. Script ép stdout sang UTF-8 vì console Windows (cp1252) không in được tiếng Việt. `README.md` hướng dẫn chạy dự án bằng đúng hai lệnh `pip install -r requirements.txt` và `python main.py`.
+
 ## So sánh BFS và DFS trên các màn có sẵn
 
 Độ dài lời giải và số node mở rộng:
@@ -57,23 +73,25 @@ Từ thư mục `Source`:
 
 ```bash
 pip install -r requirements.txt
-python -m pytest -q                    # toàn bộ 79 test
+python -m pytest -q                    # toàn bộ 94 test
 python -m pytest tests/test_bfs.py -v  # BFS
 python -m pytest tests/test_dfs.py -v  # DFS
 python -m pytest tests/test_metrics.py -v  # metrics
+python -m pytest tests/test_api.py -v  # API
 ```
 
-Các test bao quát: giải được cả 5 màn tích hợp sẵn, lời giải phát lại đúng bằng `Game.result` và kết thúc ở ô đích, màn không có lời giải vẫn dừng, BFS cho lời giải ngắn nhất, `max_depth` của DFS, cấu trúc kết quả và bộ nhớ đỉnh của `run_solver`.
+Các test bao quát: giải được cả 5 màn tích hợp sẵn, lời giải phát lại đúng bằng `Game.result` và kết thúc ở ô đích, màn không có lời giải vẫn dừng, BFS cho lời giải ngắn nhất, `max_depth` của DFS, cấu trúc kết quả và bộ nhớ đỉnh của `run_solver`, các endpoint API (nạp màn, đi một nước, thắng/thua, màn không tồn tại, hướng sai, timeout 504).
 
 ## Trạng thái xác minh hiện tại
 
-- 79 bài kiểm thử pytest vượt qua;
+- 94 bài kiểm thử pytest vượt qua;
+- đã chạy thật `python main.py` và gọi `/api/levels`, `/api/solve` bằng curl; cổng bị chiếm được báo đúng;
 - BFS và DFS đều giải được cả 5 màn L01–L05;
 - lời giải DFS không bao giờ ngắn hơn lời giải BFS.
 
 ## Chưa triển khai
 
-- API backend (`server/app.py`);
-- đóng gói (`main.py`, `requirements.txt`, README chạy dự án);
-- video demo;
-- các solver UCS và A* (thuộc TV1).
+- `POST /api/switch_control` trả 501 vì `Game` chưa có cơ chế tách khối (TV3);
+- UCS và A* (TV1): API sẽ tự dùng khi có `solvers/ucs.py` (hàm `ucs`) và `solvers/astar.py` (hàm `astar`) dạng `solver(game) -> {"moves", "expanded"}`;
+- chưa thử trên máy sạch và chưa có giao diện `web/` (TV4);
+- video demo (kịch bản nháp ở `docs/video_script.md`).
