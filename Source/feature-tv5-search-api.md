@@ -33,7 +33,7 @@ Kết quả: giải được cả 5 màn L01 đến L05.
 
 File: `solvers/dfs.py`, kiểm tra: `tests/test_dfs.py`.
 
-- [x] Chọn DFS (không chọn IDS). **Báo cáo chung của nhóm cần ghi rõ lựa chọn này.**
+- [x] Chọn DFS, không chọn IDS. Lý do: DFS cho lời giải khác BFS rõ rệt nên so sánh giữa hai thuật toán có ý nghĩa; IDS cho kết quả gần như trùng BFS.
 - [x] Ghi nhớ trạng thái đã đi qua nên không bị lặp mãi.
 - [x] Không dùng hàm tự gọi lại chính nó mà dùng ngăn xếp tự tạo, nên không bị lỗi tràn bộ nhớ. Có thể đặt giới hạn độ sâu bằng `max_depth` (mặc định không giới hạn).
 - [x] Nhận xét cho báo cáo: lời giải DFS thường dài và không tối ưu (xem bảng dưới).
@@ -48,7 +48,7 @@ So sánh BFS và DFS trên 5 màn có sẵn, gồm số nước của lời gi�
 | L04 | 7 nước, 51 trạng thái | 16 nước, 20 trạng thái |
 | L05 | 8 nước, 47 trạng thái | 24 nước, 32 trạng thái |
 
-DFS cho lời giải dài hơn nhiều nhưng thường xem xét ít trạng thái hơn.
+DFS cho lời giải dài hơn nhiều và không tối ưu (ví dụ L01: BFS 3 nước, DFS 15 nước), nhưng thường xem xét ít trạng thái hơn.
 
 ## A3. Đo kết quả của thuật toán
 
