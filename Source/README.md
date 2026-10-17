@@ -1,6 +1,6 @@
 # Bloxorz Solver
 
-Trò chơi Bloxorz kèm các thuật toán tìm kiếm (BFS, DFS, UCS, A*) và giao diện 3D chạy trên trình duyệt.
+Trò chơi Bloxorz kèm các thuật toán tìm kiếm (BFS, IDS, UCS, A*) và giao diện 3D chạy trên trình duyệt.
 
 ## Chạy dự án
 
@@ -31,7 +31,7 @@ Source/
 ├── requirements.txt
 ├── game/                luật chơi (state, game, level_loader)
 ├── levels/              các màn chơi JSON
-├── solvers/             bfs, dfs, metrics (đo đạc), registry (tên thuật toán -> solver)
+├── solvers/             bfs, ids, dfs (mốc so sánh), metrics (đo đạc), registry (tên thuật toán -> solver)
 ├── server/              API FastAPI (app.py) và runner.py (chạy solver có giới hạn thời gian)
 ├── web/                 giao diện 3D (Three.js); có index.html thì được phục vụ tại "/"
 ├── tools/               tiện ích kiểm tra màn chơi
@@ -50,7 +50,7 @@ Source/
 | `POST /api/switch_control` | | Chưa hỗ trợ (501) |
 | `POST /api/solve` | `{algorithm, level_id, timeout?}` | `{algorithm, level_id, solved, moves, metrics}` |
 
-`algorithm` là `bfs`, `dfs`, `ucs` hoặc `astar`. `metrics` gồm `expanded`, `time` (giây), `peak_memory` (byte), `length`.
+`algorithm` là `bfs`, `ids`, `dfs`, `ucs` hoặc `astar`. `metrics` gồm `expanded`, `time` (giây), `peak_memory` (byte), `length`.
 
 Mã lỗi: 400 (hướng hoặc thuật toán sai), 404 (màn không tồn tại), 409 (chưa nạp màn hoặc ván đã kết thúc), 422 (dữ liệu sai dạng), 500 (solver lỗi), 501 (chưa cài đặt), 504 (giải quá thời gian).
 

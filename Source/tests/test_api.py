@@ -58,7 +58,7 @@ def test_winning_then_move_rejected():
     assert client.post("/api/move", json={"direction": "R"}).status_code == 409
 
 
-@pytest.mark.parametrize("algo", ["bfs", "dfs"])
+@pytest.mark.parametrize("algo", ["bfs", "ids", "dfs"])
 def test_solve(algo):
     r = client.post("/api/solve", json={"algorithm": algo, "level_id": "L03"})
     assert r.status_code == 200

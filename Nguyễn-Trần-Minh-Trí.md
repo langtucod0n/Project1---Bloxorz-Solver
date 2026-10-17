@@ -25,10 +25,10 @@ Làm hai thuật toán cơ bản (20đ), module đo 4 số liệu dùng chung ch
 - [x] Trạng thái là hashable (TV2 làm), nên dùng thẳng trong tập `visited`.
 
 ### A2. DFS hoặc IDS (10đ)
-- [x] File `solvers/dfs.py`. Có thể chọn IDS thay DFS, **ghi rõ trong báo cáo**. **(đã chọn DFS, ghi trong Source/feature-tv5-search-api.md)**
+- [x] File `solvers/ids.py`. Có thể chọn IDS thay DFS, **ghi rõ trong báo cáo**. **(đã chọn IDS vì cho lời giải ngắn nhất; căn cứ và số liệu so sánh trong Source/feature-tv5-search-api.md, mục A2; `solvers/dfs.py` giữ làm mốc so sánh)**
 - [x] Bắt buộc xử lý trạng thái lặp (tập `visited`), để không chạy vòng tròn.
-- [x] Nếu dùng DFS thuần, đặt giới hạn độ sâu để không tràn stack (đề xuất không đệ quy, dùng stack tự tạo).
-- [x] Nhận xét trong báo cáo: lời giải DFS thường dài, không tối ưu. **(có trong Source/feature-tv5-search-api.md)**
+- [x] Nếu dùng DFS thuần, đặt giới hạn độ sâu để không tràn stack (đề xuất không đệ quy, dùng stack tự tạo). **(IDS tự có giới hạn độ sâu từng vòng; DFS mốc có `max_depth`)**
+- [x] Nhận xét trong báo cáo: lời giải DFS thường dài, không tối ưu. **(có trong Source/feature-tv5-search-api.md, mục A2: DFS dài hơn 2 đến 3 lần ở L01, L04, L05, IDS ngắn nhất bằng BFS)**
 
 ### A3. Module đo đạc (dùng chung, làm sớm)
 - [x] File `solvers/metrics.py` với hàm bọc quanh mỗi solver, đo:
@@ -42,7 +42,7 @@ Làm hai thuật toán cơ bản (20đ), module đo 4 số liệu dùng chung ch
 ### A4. API backend (tuần 1 đến 2)
 - [x] Dùng FastAPI hoặc Flask. File `server/app.py`.
 - [x] Python giữ toàn bộ luật và solver. API chỉ gọi vào `game/` và `solvers/`.
-- [ ] Endpoint đề xuất: **(xong levels, load, move, solve với bfs/dfs; chưa có ucs/astar (chờ TV1) và switch_control (chờ TV3))**
+- [ ] Endpoint đề xuất: **(xong levels, load, move, solve với bfs/ids/dfs; chưa có ucs/astar (chờ TV1) và switch_control (chờ TV3))**
   - `POST /api/load` với `level_id` -> trạng thái ban đầu
   - `POST /api/move` với `direction` -> trạng thái mới
   - `POST /api/switch_control` -> đổi cube điều khiển
@@ -67,7 +67,7 @@ Làm hai thuật toán cơ bản (20đ), module đo 4 số liệu dùng chung ch
 - [ ] Dành đủ thời gian: quay thử 1 lần trước, để TV4 chỉnh giao diện, rồi quay bản cuối vào tuần 3. **(chưa làm)**
 
 ## B. Phần báo cáo của bạn
-- Mô tả BFS, DFS/IDS (cách xử lý trạng thái lặp). **Đã làm**, nằm ở mục A1 và A2 của `Source/feature-tv5-search-api.md`. Không cần chờ ai.
+- Mô tả BFS, DFS/IDS (cách xử lý trạng thái lặp). **Đã làm (chọn IDS)**, nằm ở mục A1 và A2 của `Source/feature-tv5-search-api.md`. Không cần chờ ai.
 - Mô tả module đo đạc và cách đo bộ nhớ. **Đã làm**, nằm ở mục A3 của `Source/feature-tv5-search-api.md`. Không cần chờ ai.
 - Phần hướng dẫn chạy và kiến trúc backend (cùng TV4).
   - Hướng dẫn chạy: **Đã làm**, nằm ở `Source/README.md` và mục A5 của `Source/feature-tv5-search-api.md`.

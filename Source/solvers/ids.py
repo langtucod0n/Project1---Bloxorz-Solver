@@ -4,8 +4,9 @@ from game.game import Game
 def ids(game: Game, max_limit: int = 200) -> dict:
     """Iterative deepening: chạy DFS giới hạn độ sâu 0, 1, 2, ... đến khi thấy đích.
 
-    Lời giải ngắn nhất như BFS nhưng tốn ít bộ nhớ hơn. Mỗi vòng chỉ giữ độ sâu nhỏ nhất đã
-    tới được của từng trạng thái, nên không đi lại một trạng thái bằng đường dài hơn.
+    Lời giải ngắn nhất như BFS. Mỗi vòng chỉ giữ độ sâu nhỏ nhất đã tới được của từng trạng
+    thái, nên không đi lại một trạng thái bằng đường dài hơn. Đổi lại phải duyệt lại các tầng
+    nông ở mỗi vòng nên xem xét nhiều trạng thái hơn BFS.
 
     Trả về {"moves": list[str] | None, "expanded": int}. expanded cộng dồn qua mọi vòng.
     """

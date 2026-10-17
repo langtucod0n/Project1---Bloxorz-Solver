@@ -3,6 +3,7 @@ from importlib import import_module
 
 from solvers.bfs import bfs
 from solvers.dfs import dfs
+from solvers.ids import ids
 
 
 def _optional(module: str, name: str):
@@ -15,7 +16,8 @@ def _optional(module: str, name: str):
 
 ALGORITHMS = {
     "bfs": bfs,
-    "dfs": dfs,
+    "ids": ids,  # thuật toán A2 của TV5
+    "dfs": dfs,  # giữ lại làm mốc so sánh với IDS
     "ucs": _optional("solvers.ucs", "ucs"),
     "astar": _optional("solvers.astar", "astar"),
 }

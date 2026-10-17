@@ -32,3 +32,12 @@ def test_ids_is_shortest_like_bfs(path):
 
 def test_ids_unsolvable_terminates():
     assert ids(make_game(["..#G"]))["moves"] is None
+
+
+def test_ids_with_metrics():
+    from solvers.metrics import run_solver
+
+    res = run_solver(ids, make_game(["...G"]))
+    assert res["moves"] == ["R", "R"]
+    assert res["length"] == 2
+    assert res["expanded"] > 0

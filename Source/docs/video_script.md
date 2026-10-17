@@ -13,7 +13,7 @@ Quay bằng OBS Studio, có phụ đề hoặc thuyết minh, đăng YouTube cô
 
 1. Chơi tay: lăn khối, bước lên công tắc để cầu hiện ra, thắng một màn.
 2. Thua: lăn ra ngoài bàn và đứng lên ô dễ vỡ, thấy khối rơi.
-3. Chạy lần lượt BFS, DFS, UCS, A* trên cùng một màn; mỗi lần phát lại lời giải.
+3. Chạy lần lượt BFS, IDS, UCS, A* (DFS làm mốc so sánh) trên cùng một màn; mỗi lần phát lại lời giải.
 4. So sánh số liệu: số node mở rộng, thời gian, bộ nhớ đỉnh, độ dài lời giải.
 5. Một màn quá khó để cho thấy báo hết thời gian (504) thay vì treo máy.
 
