@@ -67,10 +67,10 @@ Làm hai thuật toán cơ bản (20đ), module đo 4 số liệu dùng chung ch
 - [ ] Dành đủ thời gian: quay thử 1 lần trước, để TV4 chỉnh giao diện, rồi quay bản cuối vào tuần 3. **(chưa làm)**
 
 ## B. Phần báo cáo của bạn
-- Mô tả BFS, DFS/IDS (cách xử lý trạng thái lặp).
-- Mô tả module đo đạc và cách đo bộ nhớ.
-- Phần hướng dẫn chạy và kiến trúc backend (cùng TV4).
-- Link video.
+- Mô tả BFS, DFS/IDS (cách xử lý trạng thái lặp). **(xong, có trong Source/feature-tv5-search-api.md)**
+- Mô tả module đo đạc và cách đo bộ nhớ. **(xong, có trong Source/feature-tv5-search-api.md)**
+- Phần hướng dẫn chạy và kiến trúc backend (cùng TV4). **(hướng dẫn chạy xong ở Source/README.md; còn thiếu phần kiến trúc backend: giao diện gọi Python qua HTTP + JSON, làm cùng TV4)**
+- Link video. **(chưa có, chờ quay và đăng video)**
 
 ## C. Mốc thời gian
 
