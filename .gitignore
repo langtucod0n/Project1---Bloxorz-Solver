@@ -14,8 +14,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
+/lib/
+/lib64/
 parts/
 sdist/
 var/
@@ -219,8 +219,31 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-.venv/
-__pycache__/
+# ---------------------------------------------------------------------------
+# Bloxorz Solver (riêng dự án)
+# ---------------------------------------------------------------------------
+# (.venv/, env/, __pycache__/, .pytest_cache/ đã khóa ở các mục trên;
+#  lib/ và lib64/ chỉ khóa ở gốc repo để không che thư mục lib/ của web)
+
+# Web GUI (Source/web, Three.js)
+node_modules/
+.vite/
+.parcel-cache/
+npm-debug.log*
+yarn-error.log*
+
+# Kết quả đo tạm của benchmark (kết quả chính thức đặt ở Source/benchmark/ để commit)
+**/benchmark/results_tmp/
+
+# Video demo / báo cáo (nặng, không đẩy lên git)
 *.mp4
 *.mov
-benchmark/results_tmp/
+
+# Hệ điều hành / editor (WSL tạo *:Zone.Identifier khi tải file từ Windows)
+.DS_Store
+Thumbs.db
+desktop.ini
+*:Zone.Identifier
+.vscode/
+.idea/
+*.swp
