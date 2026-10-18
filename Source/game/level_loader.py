@@ -86,6 +86,10 @@ def _validate_bridges_switches(level: dict) -> None:
                 raise LevelError(f"{where}.cells[{j}]: ô {[r, c]} đã thuộc cầu {bridge_cells[(r, c)]}")
             bridge_cells[(r, c)] = i
 
+    sr, sc = level["start"]
+    if (sr, sc) in bridge_cells and not bridges[bridge_cells[(sr, sc)]]["open"]:
+        raise LevelError(f"'start' {[sr, sc]} nằm trên ô của cầu {bridge_cells[(sr, sc)]} đang đóng")
+
     switches = level.get("switches", [])
     if not isinstance(switches, list):
         raise LevelError("'switches' phải là danh sách")
@@ -125,6 +129,10 @@ def _validate_bridges_switches(level: dict) -> None:
             for p in pts:
                 if kind(*p) != "floor":
                     raise LevelError(f"{where}: ô split_to {list(p)} trên grid phải là floor, không phải {kind(*p)}")
+                if p in bridge_cells:
+                    raise LevelError(f"{where}: ô split_to {list(p)} trùng ô của cầu {bridge_cells[p]}")
+            if abs(pts[0][0] - pts[1][0]) + abs(pts[0][1] - pts[1][1]) <= 1:
+                raise LevelError(f"{where}: 'split_to' không được trùng hoặc kề nhau")
         else:
             raise LevelError(f"{where}: 'type' lạ {t!r}")
 
