@@ -237,6 +237,7 @@
     const center = stateCenter(fromState);
     const dims = blockDimensions(fromState);
     const pivotPosition = center.clone();
+    pivotPosition.y = 0; // truc xoay nam o canh duoi, ngang mat san (y = 0), khong phai o giua khoi
     let axis;
     let angle;
 

@@ -224,3 +224,5 @@ __pycache__/
 *.mp4
 *.mov
 benchmark/results_tmp/
+# Giu lai thu vien Three.js cua UI (nếu không, quy tac "lib/" o tren se chan web/lib/)
+!Source/web/lib/
