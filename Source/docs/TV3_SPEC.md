@@ -91,10 +91,30 @@ Ví dụ trên: đứng ở `(0,0)`, bấm `R` → khối nằm `(0,1)-(0,2)` ch
 
 ## E. Tiêu chí "xong"
 
-- [ ] Mỗi loại ô đặc biệt có ít nhất 1 màn chạy đúng bằng tay và giải được bằng BFS. *(Đã có level dựng trong test; file level thật ở Đợt 3.)*
+- [x] Mỗi loại ô đặc biệt có ít nhất 1 màn giải được bằng BFS (L05–L16 trong `levels/`).
 - [x] `pytest` qua toàn bộ.
 - [x] Solver không lặp vô hạn khi có toggle: tình trạng cầu (và split) nằm trong `State` nên tập `visited` đúng. Có test BFS trên level có toggle (`test_bfs_soft_toggle_mo_cau`, `test_bfs_ket_thuc_khi_khong_giai_duoc`) chứng minh kết thúc.
 - Trạng thái từng mục:
   - **Đợt 1** = fragile, cầu, soft, heavy, toggle/permanent — *đã cài*.
   - **Đợt 2** = split, `S`, ghép — *đã cài*.
-  - **Đợt 3** = bộ level (3–5 màn fragile, 3–5 màn công tắc+cầu, 3–5 màn có split) cùng TV1 — *chưa làm*.
+  - **Đợt 3** = bộ level (3–5 màn fragile, 3–5 màn công tắc+cầu, 3–5 màn có split) cùng TV1 — *đã làm* (L06–L16).
+
+## Bộ level (Đợt 3)
+
+`levels/L06.json`–`L16.json`, mỗi màn giải được bằng `bfs` trong 6–25 nước và phát lại bằng `step` tới `WON`. Metadata nằm trong bảng `LEVELS_D3` của `tests/test_tiles.py`; test tính lại cơ chế từ dữ liệu màn và bắt buộc khớp bảng.
+
+| id | nhóm | cơ chế | số nước BFS | cách bỏ cơ chế để kiểm (kết quả) |
+|---|---|---|---|---|
+| L06 | fragile | fragile rải rác, buộc lăn nằm | 9 | thay `F` bằng `.` → 6 nước |
+| L07 | fragile | dải fragile dày 2 hàng, phải nằm qua | 10 | thay `F` bằng `.` → 7 nước |
+| L08 | fragile | goal có 3 ô fragile kề | 6 | thay `F` bằng `.` → 5 nước |
+| L09 | công tắc & cầu | soft + toggle, 1 cầu | 10 | bỏ `switches` → không giải được |
+| L10 | công tắc & cầu | heavy `open` (phải đứng) + soft `close` làm bẫy | 16 | bỏ `switches` → không giải được |
+| L11 | công tắc & cầu | 1 công tắc → 2 cầu (`permanent`, `state: true`) + bẫy `permanent`, `state: false` | 18 | bỏ `switches` → không giải được |
+| L12 | công tắc & cầu | 2 công tắc toggle cùng điều khiển 1 cầu | 17 | bỏ `switches` → không giải được |
+| L13 | split | tách → lăn cube → ghép → đứng lên goal | 9 | bỏ công tắc split → không giải được |
+| L14 | split | bắt buộc dùng `S` (cube kia phải đi bấm soft `open`) | 9 | bỏ công tắc split → không giải được |
+| L15 | split | cube bấm soft toggle mở cầu 3 ô; heavy `close` làm mồi (cube không kích hoạt được); lời giải có `S` | 13 | bỏ công tắc split → không giải được |
+| L16 | split | split + cầu + fragile; soft `permanent` do cube bấm | 14 | bỏ công tắc split → không giải được |
+
+**Màn có split và fragile** (quy tắc "cube đơn trên fragile thì `LOST`" còn *chờ nhóm xác nhận*): chỉ **L16**. Ô fragile là các ô `(1..2, 0..3)`, nằm trong khu xuất phát bị tường void cột 4 chắn; hai cube chỉ lăn được ở khu bên phải tường nên **không thể tới** fragile (khối 1×2 đi qua chúng trước khi tách). Nên kết quả L16 không phụ thuộc vào quyết định nhóm.

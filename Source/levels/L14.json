@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "id": "L14",
+  "grid": [
+    "....G.......",
+    "............"
+  ],
+  "start": [0, 0],
+  "legend": {".": "floor", "#": "void", "G": "goal", "F": "fragile"},
+  "switches": [
+    {"cell": [0, 3], "type": "split", "split_to": [[0, 5], [0, 11]]},
+    {"cell": [0, 7], "type": "soft", "targets": [0], "mode": "open"}
+  ],
+  "bridges": [
+    {"id": 0, "cells": [[0, 6]], "open": false}
+  ]
+}

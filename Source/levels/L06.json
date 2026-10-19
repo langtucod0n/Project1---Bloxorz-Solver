@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "id": "L06",
+  "grid": [
+    ".F.F.",
+    "F..F.",
+    ".....",
+    ".F...",
+    "...FG"
+  ],
+  "start": [0, 0],
+  "legend": {".": "floor", "#": "void", "G": "goal", "F": "fragile"},
+  "switches": [],
+  "bridges": []
+}

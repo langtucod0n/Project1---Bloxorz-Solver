@@ -1,9 +1,11 @@
+import copy
 import json
+from pathlib import Path
 
 import pytest
 
 from game.game import Game
-from game.level_loader import LevelError, validate_level
+from game.level_loader import LevelError, load_level, validate_level
 from game.state import LYING_H, LYING_V, STANDING, State, state_from_dict, state_to_dict
 from tools.check_levels import bfs
 
@@ -479,3 +481,187 @@ def test_bfs_ket_thuc_khi_khong_giai_duoc():
     lvl = lv([ROW9], bridges=[br(0, [[0, 6]])],
              switches=[sp((0, 3), (0, 5), (0, 8)), sw((0, 7), mode="close")])
     assert bfs(Game(lvl)) is None
+
+
+# ===========================================================================
+# ĐỢT 3: bộ màn chơi L06–L16
+# ===========================================================================
+LEVELS_DIR = Path(__file__).resolve().parent.parent / "levels"
+
+# id -> (nhóm, cơ chế, cách bỏ cơ chế để kiểm, số nước BFS, số nước khi bỏ cơ chế (None = không giải được))
+# "cơ chế" tính lại từ dữ liệu màn và phải khớp đúng bảng này (test_d3_co_che_khop_bang).
+LEVELS_D3 = {
+    "L06": ("fragile", "fragile", "fragile", 9, 6),
+    "L07": ("fragile", "fragile", "fragile", 10, 7),
+    "L08": ("fragile", "fragile", "fragile", 6, 5),
+    "L09": ("công tắc & cầu", "soft toggle bridge", "switches", 10, None),
+    "L10": ("công tắc & cầu", "soft heavy open close multi_switch bridge", "switches", 16, None),
+    "L11": ("công tắc & cầu", "soft permanent permanent_false multi_target multi_switch bridge", "switches", 18, None),
+    "L12": ("công tắc & cầu", "soft toggle multi_switch bridge", "switches", 17, None),
+    "L13": ("split", "split", "split", 9, None),
+    "L14": ("split", "split soft open bridge S", "split", 9, None),
+    "L15": ("split", "split soft heavy toggle close multi_switch bridge S", "split", 13, None),
+    "L16": ("split", "split soft permanent fragile bridge", "split", 14, None),
+}
+# màn có fragile trong nhóm split: ô fragile phải nằm ngoài tầm cube (mục 5 dispatch)
+D3_IDS = sorted(LEVELS_D3)
+
+
+def d3_level(id_):
+    return load_level(LEVELS_DIR / f"{id_}.json")
+
+
+def bo_co_che(level, kind):
+    #Bản bỏ cơ chế (không ghi file): fragile -> '.', switches -> [], split -> xoá công tắc split
+    l = copy.deepcopy(level)
+    if kind == "fragile":
+        l["grid"] = [row.replace("F", ".") for row in l["grid"]]
+    elif kind == "switches":
+        l["switches"] = []
+    else:
+        l["switches"] = [s for s in l["switches"] if s["type"] != "split"]
+    return l
+
+
+def co_che(level, sol):
+    #Tập cơ chế suy ra từ dữ liệu màn + lời giải BFS
+    tags = set()
+    if any("F" in row for row in level["grid"]):
+        tags.add("fragile")
+    if level["bridges"]:
+        tags.add("bridge")
+    dem = {}
+    for s in level["switches"]:
+        tags.add(s["type"])
+        if s["type"] == "split":
+            continue
+        tags.add(s["mode"])
+        if s["mode"] == "permanent" and s.get("state", True) is False:
+            tags.add("permanent_false")
+        if len(s["targets"]) > 1:
+            tags.add("multi_target")
+        for t in s["targets"]:
+            dem[t] = dem.get(t, 0) + 1
+    if any(n >= 2 for n in dem.values()):
+        tags.add("multi_switch")
+    if "S" in sol:
+        tags.add("S")
+    return tags
+
+
+def test_d3_bang_metadata_day_du():
+    files = sorted(p.stem for p in LEVELS_DIR.glob("L*.json") if int(p.stem[1:]) >= 6)
+    assert files == D3_IDS                                    # không thiếu, không thừa
+    assert files == [f"L{n:02d}" for n in range(6, 6 + len(files))]   # liên tục, không nhảy số
+
+
+@pytest.mark.parametrize("id_", D3_IDS)
+def test_d3_validate_id_version(id_):
+    level = d3_level(id_)                                     # load_level đã gọi validate_level
+    validate_level(level)
+    assert level["id"] == id_ and level["version"] == 1
+    assert "switches" in level and "bridges" in level
+    assert sum(row.count("G") for row in level["grid"]) == 1
+
+
+@pytest.mark.parametrize("id_", D3_IDS)
+def test_d3_giai_duoc_va_phat_lai_toi_won(id_):
+    g = Game(d3_level(id_))
+    sol = bfs(g)
+    assert sol is not None and 6 <= len(sol) <= 25
+    assert len(sol) == LEVELS_D3[id_][3]
+    s = g.initial_state()
+    for i, a in enumerate(sol):
+        s, st = g.step(s, a)
+        assert st == ("WON" if i == len(sol) - 1 else "PLAYING")
+    assert g.is_goal(s)
+
+
+@pytest.mark.parametrize("id_", D3_IDS)
+def test_d3_bat_buoc_dung_co_che(id_):
+    _, _, kind, n, n_bo = LEVELS_D3[id_]
+    level = d3_level(id_)
+    sol_bo = bfs(Game(bo_co_che(level, kind)))
+    if kind == "fragile":
+        assert sol_bo is not None and len(sol_bo) < n         # bỏ fragile thì NGẮN HƠN
+    else:
+        assert sol_bo is None or len(sol_bo) > n              # không giải được hoặc dài hơn
+    assert (None if sol_bo is None else len(sol_bo)) == n_bo
+
+
+@pytest.mark.parametrize("id_", D3_IDS)
+def test_d3_co_che_khop_bang(id_):
+    level = d3_level(id_)
+    assert co_che(level, bfs(Game(level))) == set(LEVELS_D3[id_][1].split())
+
+
+def test_d3_phu_co_che_ca_bo():
+    tags = set()
+    for id_ in D3_IDS:
+        level = d3_level(id_)
+        tags |= co_che(level, bfs(Game(level)))
+    need = {"fragile", "soft", "heavy", "toggle", "open", "close", "permanent", "permanent_false",
+            "split", "S", "multi_target", "multi_switch"}
+    assert need <= tags, need - tags
+
+
+def test_d3_heavy_phai_dung_thang_L10():
+    level = d3_level("L10")
+    g = Game(level)
+    sol = bfs(g)
+    heavy = next(tuple(s["cell"]) for s in level["switches"] if s["type"] == "heavy")
+    s, mo = g.initial_state(), None
+    for a in sol:
+        s2, _ = g.step(s, a)
+        if mo is None and s2.bridges != s.bridges:
+            mo = s2                                           # lần đầu cầu đổi: do heavy
+        s = s2
+    assert mo.orient == STANDING and (mo.r, mo.c) == heavy
+    # nếu nằm đè cũng mở được (soft) thì có lời giải ngắn hơn: heavy thật sự buộc phải đứng
+    soft = copy.deepcopy(level)
+    next(s for s in soft["switches"] if s["type"] == "heavy")["type"] = "soft"
+    assert len(bfs(Game(soft))) < len(sol)
+
+
+def test_d3_L11_bay_va_nhieu_cau():
+    level = d3_level("L11")
+    sol = bfs(Game(level))
+    # công tắc điều khiển 2 cầu; chỉ điều khiển cầu 0 thì không giải được
+    mot_cau = copy.deepcopy(level)
+    mot_cau["switches"][0]["targets"] = [0]
+    assert bfs(Game(mot_cau)) is None
+    # công tắc state:false là bẫy: bỏ nó thì lời giải ngắn hơn
+    khong_bay = copy.deepcopy(level)
+    khong_bay["switches"] = khong_bay["switches"][:1]
+    assert len(bfs(Game(khong_bay))) < len(sol)
+
+
+@pytest.mark.parametrize("id_", [i for i in D3_IDS if "split" in LEVELS_D3[i][1].split()])
+def test_d3_split_bo_split_khong_giai_duoc(id_):
+    # màn nào dùng soft cho cube thì bỏ split là hết đường
+    assert bfs(Game(bo_co_che(d3_level(id_), "split"))) is None
+
+
+def test_d3_split_ket_hop_fragile_ngoai_tam_cube():
+    # liệt kê trong báo cáo/spec: L16 là màn split duy nhất có fragile
+    co = [i for i in D3_IDS if "split" in LEVELS_D3[i][1].split() and "fragile" in LEVELS_D3[i][1].split()]
+    assert co == ["L16"]
+    level = d3_level("L16")
+    grid = level["grid"]
+    cau = {tuple(c) for b in level["bridges"] for c in b["cells"]}
+    ke = lambda r, c: [(r + dr, c + dc) for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1))]
+    # loang từ hai ô split_to qua mọi ô không void (ô cầu coi như đi được)
+    sp_ = next(s for s in level["switches"] if s["type"] == "split")
+    thay = {tuple(p) for p in sp_["split_to"]}
+    todo = list(thay)
+    while todo:
+        r, c = todo.pop()
+        for q in ke(r, c):
+            if 0 <= q[0] < len(grid) and 0 <= q[1] < len(grid[0]) and q not in thay \
+                    and (grid[q[0]][q[1]] != "#" or q in cau) and grid[q[0]][q[1]] != "F":
+                thay.add(q)
+                todo.append(q)
+    fragile = {(r, c) for r, row in enumerate(grid) for c, ch in enumerate(row) if ch == "F"}
+    assert fragile and not (fragile & thay)
+    # kể cả coi fragile là đi được, cube vẫn không chạm tới: ô kề fragile cũng không thuộc vùng cube
+    assert not any(q in thay for f in fragile for q in ke(*f))
