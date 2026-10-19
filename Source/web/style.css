@@ -1,0 +1,28 @@
+:root { color-scheme: dark; font-family: Inter, Segoe UI, Arial, sans-serif; background: #10131b; color: #eef2ff; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 20% 0%, #202b40 0, #10131b 48%); }
+.topbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 20px 26px; border-bottom: 1px solid #2b3447; }
+.eyebrow { margin: 0 0 5px; color: #82aaff; font-size: 11px; font-weight: 800; letter-spacing: .16em; }
+h1 { margin: 0; font-size: clamp(24px, 3vw, 34px); }
+.status { padding: 9px 13px; border: 1px solid #40516f; border-radius: 999px; color: #cfe0ff; background: #1b2638; font-size: 13px; }
+.layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 18px; padding: 20px; max-width: 1400px; margin: auto; }
+.game-panel, .side-panel { border: 1px solid #2b3447; border-radius: 18px; background: rgba(21, 27, 39, .92); box-shadow: 0 16px 45px #0003; overflow: hidden; }
+#game-container { width: 100%; height: min(72vh, 720px); min-height: 430px; }
+#game-container canvas { display: block; width: 100%; height: 100%; }
+.hint { padding: 13px 17px; border-top: 1px solid #2b3447; color: #b9c4d9; font-size: 13px; line-height: 1.6; }
+.side-panel { padding: 20px; }
+h2 { margin: 0 0 18px; font-size: 19px; }
+h3 { margin: 18px 0 12px; font-size: 14px; }
+button { width: 100%; border: 1px solid #3c4b65; border-radius: 10px; padding: 11px 14px; margin-bottom: 10px; color: #eef2ff; background: #222c3e; cursor: pointer; font-weight: 700; }
+button:hover { filter: brightness(1.15); }
+button:disabled { opacity: .5; cursor: wait; }
+button.primary { background: #3168d9; border-color: #5284ec; }
+.stat { display: flex; justify-content: space-between; gap: 12px; margin: 14px 0; color: #aebbd1; font-size: 13px; }
+.stat b { color: #fff; text-align: right; }
+hr { border: 0; border-top: 1px solid #2b3447; margin: 18px 0; }
+.legend { display: flex; align-items: center; gap: 10px; margin: 10px 0; color: #c5cee0; font-size: 13px; }
+.swatch { display: inline-block; width: 18px; height: 18px; border-radius: 5px; border: 1px solid #ffffff30; }
+.swatch.tile { background: #79879c; } .swatch.goal { background: #171d29; box-shadow: inset 0 0 0 3px #dfb95d; } .swatch.block { background: #42a5ff; }
+.note { color: #8f9db5; font-size: 12px; line-height: 1.6; margin-top: 22px; }
+code { color: #c2d8ff; }
+@media (max-width: 850px) { .layout { grid-template-columns: 1fr; padding: 12px; } #game-container { height: 58vh; min-height: 360px; } .topbar { padding: 16px; } }

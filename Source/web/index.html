@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bloxorz Solver - TV4</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">TV4 · THREE.JS</p>
+      <h1>Bloxorz Solver</h1>
+    </div>
+    <div id="status" class="status">Sẵn sàng</div>
+  </header>
+
+  <main class="layout">
+    <section class="game-panel">
+      <div id="game-container" aria-label="Bàn chơi Bloxorz 3D"></div>
+      <div class="hint">Dùng phím <b>↑ ↓ ← →</b> hoặc <b>W A S D</b> để lăn khối. Kéo chuột để xoay góc nhìn.</div>
+    </section>
+
+    <aside class="side-panel">
+      <h2>Điều khiển</h2>
+      <button id="restartBtn" class="primary">Chơi lại</button>
+      <div class="stat"><span>Hướng khối</span><b id="orientation">Đứng</b></div>
+      <div class="stat"><span>Số nước đi</span><b id="moveCount">0</b></div>
+      <div class="stat"><span>Vị trí neo</span><b id="anchor">(2, 1)</b></div>
+      <hr />
+      <h3>Chú giải</h3>
+      <div class="legend"><span class="swatch tile"></span> Sàn</div>
+      <div class="legend"><span class="swatch goal"></span> Đích</div>
+      <div class="legend"><span class="swatch block"></span> Khối Bloxorz</div>
+      <p class="note">Bản tuần 1: dữ liệu màn chơi đang là mẫu trong <code>main.js</code>. Chưa nối API Python và chưa xử lý ô đặc biệt.</p>
+    </aside>
+  </main>
+
+  <script src="lib/three.min.js"></script>
+  <script src="lib/OrbitControls.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
