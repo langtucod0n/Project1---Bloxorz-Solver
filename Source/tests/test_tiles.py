@@ -1,4 +1,5 @@
 import copy
+import functools
 import json
 from pathlib import Path
 
@@ -6,7 +7,7 @@ import pytest
 
 from game.game import Game
 from game.level_loader import LevelError, load_level, validate_level
-from game.state import LYING_H, LYING_V, STANDING, State, state_from_dict, state_to_dict
+from game.state import LYING_H, LYING_V, STANDING, State, cells, state_from_dict, state_to_dict
 from tools.check_levels import bfs
 
 LEGEND = {".": "floor", "#": "void", "G": "goal", "F": "fragile"}
@@ -665,3 +666,39 @@ def test_d3_split_ket_hop_fragile_ngoai_tam_cube():
     assert fragile and not (fragile & thay)
     # kể cả coi fragile là đi được, cube vẫn không chạm tới: ô kề fragile cũng không thuộc vùng cube
     assert not any(q in thay for f in fragile for q in ke(*f))
+
+
+# --- khứ hồi JSON: mọi State tới được phải đọc lại đúng ---
+MAN_KHU_HOI = ("L10", "L11", "L15", "L16")
+
+
+@functools.lru_cache(maxsize=None)
+def duyet_state(ma):
+    #duyệt toàn bộ State tới được từ initial_state qua actions/result
+    game = Game(load_level(LEVELS_DIR / f"{ma}.json"))
+    s0 = game.initial_state()
+    thay, todo = {s0}, [s0]
+    while todo:
+        s = todo.pop()
+        for a in game.actions(s):
+            s2 = game.result(s, a)
+            if s2 not in thay:
+                thay.add(s2)
+                todo.append(s2)
+    return game, frozenset(thay)
+
+
+@pytest.mark.parametrize("ma", MAN_KHU_HOI)
+def test_khu_hoi_json_moi_trang_thai_toi_duoc(ma):
+    game, states = duyet_state(ma)
+    tra = {s: s for s in states}
+    for s in states:
+        s2 = state_from_dict(json.loads(json.dumps(state_to_dict(s, game))))
+        assert s2 == s and hash(s2) == hash(s), (ma, s, s2)
+        assert tra[s2] is s
+        assert cells(s2) == cells(s), (ma, s)
+    # gộp cả bộ (không bắt từng màn): phải có State nhiều cầu mở và State split
+    gop = [s for m in MAN_KHU_HOI for s in duyet_state(m)[1]]
+    assert any(s.bridges.bit_count() >= 2 for s in gop)
+    assert any(s.split is not None for s in gop)
+    assert state_from_dict({"orient": 0, "r": 1, "c": 1}) == State(0, 1, 1)
