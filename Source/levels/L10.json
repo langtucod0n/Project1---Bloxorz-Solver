@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "id": "L10",
+  "grid": [
+    "......",
+    "#.....",
+    "#....#",
+    "...#.#",
+    ".....G"
+  ],
+  "start": [0, 0],
+  "legend": {".": "floor", "#": "void", "G": "goal", "F": "fragile"},
+  "switches": [
+    {"cell": [2, 3], "type": "heavy", "targets": [0], "mode": "open"},
+    {"cell": [2, 4], "type": "soft", "targets": [0], "mode": "close"}
+  ],
+  "bridges": [
+    {"id": 0, "cells": [[4, 3]], "open": false}
+  ]
+}

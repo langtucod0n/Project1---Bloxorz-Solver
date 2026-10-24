@@ -1,0 +1,44 @@
+"""Chạy benchmark. Từ thư mục Source:  python -m benchmark.run_all"""
+import csv, importlib, os, statistics
+from solvers.metrics import run_solver
+from solvers.costs import path_cost
+from solvers.loader import load_game
+
+REPEATS = 5                                      # lặp để lấy trung vị thời gian
+GROUPS = {"1-Đơn giản": ["L01", "L02", "L03", "L04", "L05"]}   # thêm nhóm khi có màn mới
+SOLVERS = {"BFS": ("solvers.bfs", "bfs"), "IDS": ("solvers.ids", "ids"), "DFS": ("solvers.dfs", "dfs"),
+           "UCS": ("solvers.ucs", "ucs"), "A*": ("solvers.astar", "astar")}
+
+def get_solvers():
+    found = {}
+    for name, (mod, fn) in SOLVERS.items():
+        try:
+            found[name] = getattr(importlib.import_module(mod), fn)
+        except (ImportError, AttributeError):
+            print(f"[bỏ qua] không tìm thấy {mod}.{fn}")
+    return found
+
+def main(out="benchmark/results.csv"):
+    solvers = get_solvers()
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    with open(out, "w", newline="", encoding="utf-8-sig") as f:
+        w = csv.writer(f)
+        w.writerow(["group", "level", "algo", "time_s", "peak_memory_bytes", "expanded", "length", "cost"])
+        for group, levels in GROUPS.items():
+            for lid in levels:
+                game = load_game(lid)
+                for name, fn in solvers.items():
+                    times, r = [], None
+                    for _ in range(REPEATS):
+                        r = run_solver(fn, game)
+                        times.append(r["time"])
+                    moves = r["moves"]
+                    cost = path_cost(game, moves) if moves is not None else ""
+                    w.writerow([group, lid, name, statistics.median(times), r["peak_memory"],
+                                r["expanded"], r["length"] if moves is not None else "", cost])
+                    print(group, lid, name, "xong")
+    print("Đã ghi", out)
+ 
+ 
+if __name__ == "__main__":
+    main()  

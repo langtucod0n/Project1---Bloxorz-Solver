@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "id": "L15",
+  "grid": [
+    "....#.....G",
+    "....#......",
+    "....#......"
+  ],
+  "start": [0, 0],
+  "legend": {".": "floor", "#": "void", "G": "goal", "F": "fragile"},
+  "switches": [
+    {"cell": [1, 1], "type": "split", "split_to": [[0, 5], [2, 5]]},
+    {"cell": [0, 6], "type": "soft", "targets": [0], "mode": "toggle"},
+    {"cell": [2, 6], "type": "heavy", "targets": [0], "mode": "close"}
+  ],
+  "bridges": [
+    {"id": 0, "cells": [[0, 7], [1, 7], [2, 7]], "open": false}
+  ]
+}
