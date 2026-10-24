@@ -1,336 +1,272 @@
-/* Bloxorz TV4 - Week 1 prototype
-   JavaScript chi render giao dien va hoat anh.
-   Luat va du lieu hien tai la mau de kiem thu; chua ket noi Python core.
-*/
+/* Bloxorz TV4 - dieu khien giao dien (tuan 2).
+   Luong du lieu:  phim / nut bam  ->  BloxorzApi (fetch)  ->  backend Python  ->  trang thai JSON
+                   ->  BloxorzScene (ve + hoat anh).   JS khong tu tinh luat choi.               */
 (() => {
   'use strict';
 
-  if (!window.THREE) {
-    document.getElementById('status').textContent = 'Lỗi: chưa tải được Three.js';
-    throw new Error('Khong tim thay THREE. Kiem tra web/lib/three.min.js');
-  }
-
-  const TILE_SIZE = 1;
-  const TILE_THICKNESS = 0.16;
-  const ROLL_DURATION = 260;
-
-  // Du lieu mau: row tang dan theo truc Z; cot tang dan theo truc X.
-  const level = {
-    rows: 7,
-    cols: 7,
-    floor: [
-      [1,1],[1,2],[1,3],[1,4],
-      [2,1],[2,2],[2,3],[2,4],[2,5],
-      [3,1],[3,2],[3,3],[3,4],[3,5],
-      [4,2],[4,3],[4,4],[4,5],
-      [5,2],[5,3],[5,4],[5,5],
-      [6,3],[6,4]
-    ],
-    start: { r: 2, c: 2, orientation: 'STANDING' },
-    goal: { r: 6, c: 3 }
+  const $ = (id) => document.getElementById(id);
+  const el = {
+    status: $('status'), container: $('game-container'), banner: $('banner'),
+    toast: $('toast'), toastText: $('toastText'), toastClose: $('toastClose'),
+    level: $('levelSelect'), newBtn: $('newBtn'), restartBtn: $('restartBtn'),
+    replayBtn: $('replayBtn'), stopBtn: $('stopBtn'),
+    speed: $('speed'), speedLabel: $('speedLabel'), solution: $('solutionBox'),
+    gameStatus: $('gameStatus'), orientation: $('orientation'), moveCount: $('moveCount'), anchor: $('anchor'),
+    statsBody: document.querySelector('#statsTable tbody')
   };
+  const solveBtns = [...document.querySelectorAll('button.solve')];
+  const allButtons = [...document.querySelectorAll('button')].filter((b) => b !== el.toastClose && b !== el.stopBtn);
 
-  const floorSet = new Set(level.floor.map(([r,c]) => `${r},${c}`));
-  const container = document.getElementById('game-container');
-  const statusEl = document.getElementById('status');
-  const orientationEl = document.getElementById('orientation');
-  const moveCountEl = document.getElementById('moveCount');
-  const anchorEl = document.getElementById('anchor');
-  const restartBtn = document.getElementById('restartBtn');
-
-  const scene = new THREE.Scene();
-  scene.background = new THREE.Color('#111827');
-  scene.fog = new THREE.Fog('#111827', 12, 28);
-
-  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-  camera.position.set(7.5, 9, 10);
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  container.appendChild(renderer.domElement);
-
-  let controls = null;
-  if (THREE.OrbitControls) {
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.target.set(3, 0, 3);
-    controls.minDistance = 5;
-    controls.maxDistance = 18;
-    controls.maxPolarAngle = Math.PI * 0.49;
+  if (!window.THREE || !THREE.OrbitControls) {
+    el.status.textContent = 'Lỗi: chưa tải được Three.js / OrbitControls';
+    throw new Error('Thieu THREE hoac THREE.OrbitControls - kiem tra web/lib/');
   }
 
-  scene.add(new THREE.HemisphereLight(0xc9e2ff, 0x273047, 2.0));
-  const sun = new THREE.DirectionalLight(0xffffff, 2.4);
-  sun.position.set(-5, 10, 7);
-  sun.castShadow = true;
-  sun.shadow.mapSize.set(2048, 2048);
-  sun.shadow.camera.left = -10;
-  sun.shadow.camera.right = 10;
-  sun.shadow.camera.top = 10;
-  sun.shadow.camera.bottom = -10;
-  scene.add(sun);
+  const api = window.BloxorzApi;
+  const view = window.BloxorzScene.create(el.container);
 
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(200, 200),
-    new THREE.MeshStandardMaterial({ color: '#0d1420', roughness: 1 })
-  );
-  ground.rotation.x = -Math.PI / 2;
-  ground.position.y = -0.14;
-  ground.receiveShadow = true;
-  scene.add(ground);
+  const ALGO_LABEL = { bfs: 'BFS', ids: 'IDS', dfs: 'DFS', ucs: 'UCS', astar: 'A*' };
+  const ORIENT = { STANDING: 'Đứng', LYING_H: 'Nằm ngang', LYING_V: 'Nằm dọc' };
+  const STATUS = { playing: 'Đang chơi', won: 'Thắng', lost: 'Thua' };
 
-  const tileMaterial = new THREE.MeshStandardMaterial({ color: '#65748b', roughness: 0.78, metalness: 0.05 });
-  const tileEdgeMaterial = new THREE.MeshStandardMaterial({ color: '#374357', roughness: 0.9 });
-  const goalMaterial = new THREE.MeshStandardMaterial({ color: '#151b28', roughness: 0.92, metalness: 0.08 });
-  const goalRingMaterial = new THREE.MeshStandardMaterial({ color: '#e9bb55', emissive: '#4b2f09', roughness: 0.45, metalness: 0.25 });
-  const blockMaterial = new THREE.MeshStandardMaterial({ color: '#2f9cff', roughness: 0.3, metalness: 0.12 });
-  const blockTopMaterial = new THREE.MeshStandardMaterial({ color: '#85d2ff', roughness: 0.28, metalness: 0.08 });
+  let level = null;
+  let levelId = null;
+  let state = null;
+  let busy = false;          // dang co hoat anh / dang goi API
+  let autoplay = false;      // dang tu chay loi giai
+  let stopRequested = false;
+  let lastSolution = null;   // { algo, moves }
+  let stats = {};            // algo -> stats cua lan giai gan nhat tren man hien tai
+  let latestAlgo = null;
+  let toastTimer = null;
+  let pendingDir = null;     // phim bam khi dang co hoat anh: nho 1 nuoc de chay ngay sau do
 
-  const tileMeshes = new THREE.Group();
-  scene.add(tileMeshes);
-  let blockMesh = null;
-  let state = copyState(level.start);
-  let moveCount = 0;
-  let isAnimating = false;
-  let gameEnded = false;
+  /* ---------------- giao dien phu ---------------- */
+  function setStatus(text) { el.status.textContent = text; }
 
-  function copyState(s) {
-    return { r: s.r, c: s.c, orientation: s.orientation };
+  function showError(err) {
+    el.toastText.textContent = err && err.message ? err.message : String(err);
+    el.toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.toast.hidden = true; }, 12000);
+    setStatus('Lỗi');
   }
 
-  function drawTiles() {
-    for (const [r, c] of level.floor) {
-      const isGoal = r === level.goal.r && c === level.goal.c;
-      const tile = new THREE.Mesh(
-        new THREE.BoxGeometry(TILE_SIZE * 0.96, TILE_THICKNESS, TILE_SIZE * 0.96),
-        isGoal ? goalMaterial : tileMaterial
-      );
-      tile.position.set(c, -TILE_THICKNESS / 2, r);
-      tile.receiveShadow = true;
-      tile.castShadow = true;
-      tile.userData.row = r;
-      tile.userData.col = c;
-      tileMeshes.add(tile);
-
-      const edge = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.BoxGeometry(TILE_SIZE * 0.96, TILE_THICKNESS, TILE_SIZE * 0.96)),
-        new THREE.LineBasicMaterial({ color: isGoal ? '#e9bb55' : '#a7b7ce', transparent: true, opacity: isGoal ? 0.95 : 0.28 })
-      );
-      edge.position.copy(tile.position);
-      tileMeshes.add(edge);
-
-      if (isGoal) {
-        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.29, 0.045, 10, 36), goalRingMaterial);
-        ring.rotation.x = Math.PI / 2;
-        ring.position.set(c, 0.015, r);
-        ring.castShadow = true;
-        tileMeshes.add(ring);
-        const center = new THREE.Mesh(new THREE.CircleGeometry(0.22, 32), goalMaterial);
-        center.rotation.x = -Math.PI / 2;
-        center.position.set(c, 0.008, r);
-        tileMeshes.add(center);
-      }
-    }
+  function setBusy(v) {
+    busy = v;
+    syncButtons();
   }
 
-  function occupiedCells(s) {
-    if (s.orientation === 'STANDING') return [[s.r, s.c]];
-    if (s.orientation === 'LYING_H') return [[s.r, s.c], [s.r, s.c + 1]];
-    return [[s.r, s.c], [s.r + 1, s.c]];
-  }
-
-  function isValidState(s) {
-    return occupiedCells(s).every(([r,c]) => floorSet.has(`${r},${c}`));
-  }
-
-  function nextState(s, direction) {
-    const n = copyState(s);
-    if (s.orientation === 'STANDING') {
-      if (direction === 'U') { n.r -= 2; n.orientation = 'LYING_V'; }
-      if (direction === 'D') { n.r += 1; n.orientation = 'LYING_V'; }
-      if (direction === 'L') { n.c -= 2; n.orientation = 'LYING_H'; }
-      if (direction === 'R') { n.c += 1; n.orientation = 'LYING_H'; }
-    } else if (s.orientation === 'LYING_H') {
-      if (direction === 'U') n.r -= 1;
-      if (direction === 'D') n.r += 1;
-      if (direction === 'L') { n.c -= 1; n.orientation = 'STANDING'; }
-      if (direction === 'R') { n.c += 2; n.orientation = 'STANDING'; }
-    } else {
-      if (direction === 'U') { n.r -= 1; n.orientation = 'STANDING'; }
-      if (direction === 'D') { n.r += 2; n.orientation = 'STANDING'; }
-      if (direction === 'L') n.c -= 1;
-      if (direction === 'R') n.c += 1;
-    }
-    return n;
-  }
-
-  function stateCenter(s) {
-    if (s.orientation === 'STANDING') return new THREE.Vector3(s.c, 1, s.r);
-    if (s.orientation === 'LYING_H') return new THREE.Vector3(s.c + 0.5, 0.5, s.r);
-    return new THREE.Vector3(s.c, 0.5, s.r + 0.5);
-  }
-
-  function blockDimensions(s) {
-    return {
-      x: s.orientation === 'LYING_H' ? 2 : 1,
-      y: s.orientation === 'STANDING' ? 2 : 1,
-      z: s.orientation === 'LYING_V' ? 2 : 1
-    };
-  }
-
-  function createBlock(s) {
-    const dims = blockDimensions(s);
-    const geometry = new THREE.BoxGeometry(dims.x, dims.y, dims.z);
-    const mesh = new THREE.Mesh(geometry, [blockMaterial, blockMaterial, blockTopMaterial, blockMaterial, blockMaterial, blockMaterial]);
-    mesh.position.copy(stateCenter(s));
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.userData.isBlock = true;
-    const edges = new THREE.LineSegments(
-      new THREE.EdgesGeometry(geometry),
-      new THREE.LineBasicMaterial({ color: '#d8f2ff', transparent: true, opacity: 0.85 })
-    );
-    mesh.add(edges);
-    scene.add(mesh);
-    return mesh;
-  }
-
-  function redrawBlock() {
-    if (blockMesh) {
-      scene.remove(blockMesh);
-      blockMesh.geometry.dispose();
-    }
-    blockMesh = createBlock(state);
+  function syncButtons() {
+    const lock = busy || autoplay;
+    allButtons.forEach((b) => { b.disabled = lock; });
+    el.stopBtn.disabled = !autoplay;
+    el.level.disabled = lock;
+    if (!lock) el.replayBtn.disabled = !lastSolution;
   }
 
   function updatePanel() {
-    const names = { STANDING: 'Đứng', LYING_H: 'Nằm ngang', LYING_V: 'Nằm dọc' };
-    orientationEl.textContent = names[state.orientation];
-    moveCountEl.textContent = String(moveCount);
-    anchorEl.textContent = `(${state.r}, ${state.c})`;
-    if (!gameEnded) statusEl.textContent = 'Sẵn sàng';
+    if (!state) return;
+    el.gameStatus.textContent = STATUS[state.status] || state.status;
+    if (state.block) {
+      el.orientation.textContent = ORIENT[state.block.orientation] || state.block.orientation;
+      el.anchor.textContent = `(${state.block.r}, ${state.block.c})`;
+    } else if (state.cubes) {
+      const [a, b] = state.cubes;
+      el.orientation.textContent = `Tách đôi · đang điều khiển cube ${state.active === 0 ? 'A (xanh dương)' : 'B (xanh lục)'}`;
+      el.anchor.textContent = `A(${a.r}, ${a.c}) · B(${b.r}, ${b.c})`;
+    }
+    el.moveCount.textContent = String(state.moves);
+
+    if (state.status === 'won') {
+      el.banner.className = 'banner won';
+      el.banner.textContent = `Chiến thắng! ${state.moves} nước đi`;
+      el.banner.hidden = false;
+      setStatus('Chiến thắng!');
+    } else if (state.status === 'lost') {
+      el.banner.className = 'banner lost';
+      el.banner.textContent = state.reason === 'fragile' ? 'Thua: ô dễ vỡ bị gãy' : 'Thua: rơi khỏi sàn';
+      el.banner.hidden = false;
+      setStatus('Thua');
+    } else {
+      el.banner.hidden = true;
+      if (!autoplay) setStatus('Sẵn sàng');
+    }
   }
 
-  function isGoal(s) {
-    return s.orientation === 'STANDING' && s.r === level.goal.r && s.c === level.goal.c;
-  }
-
-  function roll(direction) {
-    if (isAnimating || gameEnded) return;
-    const target = nextState(state, direction);
-    if (!isValidState(target)) {
-      statusEl.textContent = 'Nước đi không hợp lệ';
+  function renderStats() {
+    const rows = Object.keys(ALGO_LABEL).filter((a) => stats[a]);
+    if (!rows.length) {
+      el.statsBody.innerHTML = '<tr class="empty"><td colspan="5">Chưa giải lần nào</td></tr>';
       return;
     }
-    animateRoll(state, target, direction);
+    el.statsBody.innerHTML = rows.map((a) => {
+      const s = stats[a];
+      const len = s.length === null || s.length === undefined ? 'không có' : s.length;
+      return `<tr class="${a === latestAlgo ? 'latest' : ''}"><td>${ALGO_LABEL[a]}</td><td>${s.time_ms}</td><td>${s.memory_kb}</td><td>${s.expanded}</td><td>${len}</td></tr>`;
+    }).join('');
   }
 
-  function animateRoll(fromState, toState, direction) {
-    if (!blockMesh) return;
-    isAnimating = true;
-    restartBtn.disabled = true;
-    statusEl.textContent = 'Đang lăn…';
-
-    const center = stateCenter(fromState);
-    const dims = blockDimensions(fromState);
-    const pivotPosition = center.clone();
-    pivotPosition.y = 0; // truc xoay nam o canh duoi, ngang mat san (y = 0), khong phai o giua khoi
-    let axis;
-    let angle;
-
-    if (direction === 'R') {
-      pivotPosition.x += dims.x / 2;
-      axis = new THREE.Vector3(0, 0, 1);
-      angle = -Math.PI / 2;
-    } else if (direction === 'L') {
-      pivotPosition.x -= dims.x / 2;
-      axis = new THREE.Vector3(0, 0, 1);
-      angle = Math.PI / 2;
-    } else if (direction === 'U') {
-      pivotPosition.z -= dims.z / 2;
-      axis = new THREE.Vector3(1, 0, 0);
-      angle = -Math.PI / 2;
-    } else {
-      pivotPosition.z += dims.z / 2;
-      axis = new THREE.Vector3(1, 0, 0);
-      angle = Math.PI / 2;
-    }
-
-    const pivot = new THREE.Group();
-    pivot.position.copy(pivotPosition);
-    scene.add(pivot);
-    scene.remove(blockMesh);
-    pivot.add(blockMesh);
-    blockMesh.position.copy(center).sub(pivotPosition);
-
-    const start = performance.now();
-    function tick(now) {
-      const raw = Math.min(1, (now - start) / ROLL_DURATION);
-      const eased = raw * raw * (3 - 2 * raw);
-      pivot.rotation.set(0, 0, 0);
-      pivot.rotateOnAxis(axis, angle * eased);
-      if (raw < 1) {
-        requestAnimationFrame(tick);
-      } else {
-        scene.remove(pivot);
-        state = copyState(toState);
-        moveCount += 1;
-        blockMesh = createBlock(state);
-        isAnimating = false;
-        restartBtn.disabled = false;
-        if (isGoal(state)) {
-          gameEnded = true;
-          statusEl.textContent = 'Chiến thắng!';
-        } else {
-          statusEl.textContent = 'Sẵn sàng';
-        }
-        updatePanel();
-      }
-    }
-    requestAnimationFrame(tick);
+  function renderSolution(moves, current) {
+    if (!moves) { el.solution.hidden = true; return; }
+    el.solution.hidden = false;
+    el.solution.innerHTML = moves.map((m, i) => {
+      const cls = i < current ? 'done' : (i === current ? 'cur' : '');
+      return `<span class="${cls}">${m}</span>`;
+    }).join(' ');
   }
 
-  function restart() {
-    if (isAnimating) return;
-    state = copyState(level.start);
-    moveCount = 0;
-    gameEnded = false;
-    redrawBlock();
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  /* ---------------- goi API + ve ---------------- */
+  async function loadLevel(id) {
+    const res = await api.load(id);
+    levelId = id;
+    level = res.level;
+    state = res.state;
+    view.loadLevel(level);
+    view.setState(state);
+    lastSolution = null;
+    stats = {};
+    latestAlgo = null;
+    renderStats();
+    renderSolution(null);
     updatePanel();
   }
 
-  function onKeyDown(event) {
-    const key = event.key.toLowerCase();
-    const map = { arrowup: 'U', w: 'U', arrowdown: 'D', s: 'D', arrowleft: 'L', a: 'L', arrowright: 'R', d: 'R' };
-    const direction = map[key];
-    if (!direction) return;
-    event.preventDefault();
-    roll(direction);
+  async function restart() {
+    const res = await api.load(levelId);       // backend khong co /restart: nap lai man
+    state = res.state;
+    view.setState(state);
+    updatePanel();
   }
 
-  function resize() {
-    const width = Math.max(1, container.clientWidth);
-    const height = Math.max(1, container.clientHeight);
-    renderer.setSize(width, height, false);
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
+  // Gui 1 nuoc di len backend, roi ve hoat anh theo trang thai backend tra ve.
+  // Tra ve false neu backend tu choi nuoc di.
+  async function applyMove(dir) {
+    const prev = state;
+    if (dir === 'S') {
+      const res = await api.switchCube();
+      if (res.result !== 'moved') return false;
+      state = res.state;
+      await view.animateSwitch(state);
+      updatePanel();
+      return true;
+    }
+    const res = await api.move(dir);
+    if (res.result !== 'moved') return false;
+    state = res.state;
+    el.moveCount.textContent = String(state.moves);
+    setStatus('Đang lăn…');
+    await view.animateMove(prev, dir, state);
+    updatePanel();
+    return true;
   }
 
-  function frame() {
-    requestAnimationFrame(frame);
-    if (controls) controls.update();
-    renderer.render(scene, camera);
+  async function guarded(fn) {
+    setBusy(true);
+    try {
+      return await fn();
+    } catch (err) {
+      showError(err);
+      autoplay = false;
+      return undefined;
+    } finally {
+      setBusy(false);
+      runPending();
+    }
   }
 
-  drawTiles();
-  redrawBlock();
-  updatePanel();
-  resize();
-  window.addEventListener('resize', resize);
-  window.addEventListener('keydown', onKeyDown);
-  restartBtn.addEventListener('click', restart);
-  frame();
+  function runPending() {
+    const d = pendingDir;
+    pendingDir = null;
+    if (!d || busy || autoplay || !state || state.status !== 'playing') return;
+    if (d === 'S' && !state.cubes) return;
+    guarded(() => applyMove(d));
+  }
+
+  /* ---------------- phat loi giai ---------------- */
+  async function play(moves) {
+    autoplay = true;
+    stopRequested = false;
+    syncButtons();
+    let i = 0;
+    try {
+      for (; i < moves.length; i++) {
+        if (stopRequested) break;
+        renderSolution(moves, i);
+        setStatus(`Đang chạy lời giải: bước ${i + 1}/${moves.length}`);
+        const ok = await applyMove(moves[i]);
+        if (!ok) throw new Error(`Backend từ chối nước đi thứ ${i + 1} (${moves[i]}).`);
+        await sleep(160 / view.speed);
+      }
+      renderSolution(moves, stopRequested ? i : moves.length);
+      if (stopRequested) setStatus('Đã dừng');
+    } finally {
+      autoplay = false;
+      syncButtons();
+    }
+  }
+
+  async function solve(algo) {
+    setStatus(`Đang giải bằng ${ALGO_LABEL[algo]}…`);
+    await restart();                       // loi giai tinh tu dau man
+    const res = await api.solve(algo, levelId);
+    stats[algo] = res.stats;
+    latestAlgo = algo;
+    renderStats();
+    if (!res.solution) {
+      lastSolution = null;
+      renderSolution(null);
+      setStatus(`${ALGO_LABEL[algo]}: không tìm thấy lời giải`);
+      return;
+    }
+    lastSolution = { algo, moves: res.solution };
+    await play(res.solution);
+  }
+
+  /* ---------------- su kien ---------------- */
+  const KEYMAP = {
+    arrowup: 'U', w: 'U', arrowdown: 'D', s: 'D', arrowleft: 'L', a: 'L', arrowright: 'R', d: 'R', ' ': 'S'
+  };
+
+  window.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target && e.target.tagName === 'SELECT') return;
+    const dir = KEYMAP[e.key.toLowerCase()];
+    if (!dir) return;
+    e.preventDefault();
+    if (autoplay || !state || state.status !== 'playing') return;
+    if (busy) { pendingDir = dir; return; }         // dang lan: xep hang 1 nuoc cho muot
+    if (dir === 'S' && !state.cubes) return;      // chi co y nghia khi da tach 2 cube (backend cung se tu choi)
+    guarded(() => applyMove(dir));
+  });
+
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (b) b.blur();                               // tranh phim Space "bam lai" nut dang focus
+  });
+
+  el.level.addEventListener('change', () => { el.level.blur(); guarded(() => loadLevel(el.level.value)); });
+  el.newBtn.addEventListener('click', () => guarded(() => loadLevel(el.level.value)));
+  el.restartBtn.addEventListener('click', () => guarded(async () => { await restart(); renderSolution(null); }));
+  solveBtns.forEach((b) => b.addEventListener('click', () => guarded(() => solve(b.dataset.algo))));
+  el.replayBtn.addEventListener('click', () => guarded(async () => {
+    if (!lastSolution) return;
+    await restart();
+    await play(lastSolution.moves);
+  }));
+  el.stopBtn.addEventListener('click', () => { stopRequested = true; });
+  el.speed.addEventListener('input', () => {
+    view.speed = parseFloat(el.speed.value);
+    el.speedLabel.textContent = `${view.speed.toFixed(2).replace(/0$/, '')}×`;
+  });
+  el.toastClose.addEventListener('click', () => { el.toast.hidden = true; });
+
+  /* ---------------- khoi dong ---------------- */
+  guarded(async () => {
+    const levels = await api.levels();
+    el.level.innerHTML = levels.map((l) => `<option value="${l.id}">${l.name}</option>`).join('');
+    await loadLevel(levels[0].id);
+  });
 })();

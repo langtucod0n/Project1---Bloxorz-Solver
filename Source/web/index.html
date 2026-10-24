@@ -12,32 +12,89 @@
       <p class="eyebrow">TV4 · THREE.JS</p>
       <h1>Bloxorz Solver</h1>
     </div>
-    <div id="status" class="status">Sẵn sàng</div>
+    <div id="status" class="status">Đang tải…</div>
   </header>
 
   <main class="layout">
     <section class="game-panel">
-      <div id="game-container" aria-label="Bàn chơi Bloxorz 3D"></div>
-      <div class="hint">Dùng phím <b>↑ ↓ ← →</b> hoặc <b>W A S D</b> để lăn khối. Kéo chuột để xoay góc nhìn.</div>
+      <div class="stage">
+        <div id="game-container" aria-label="Bàn chơi Bloxorz 3D"></div>
+        <div id="banner" class="banner" hidden></div>
+        <div id="toast" class="toast" role="alert" hidden>
+          <span id="toastText"></span>
+          <button id="toastClose" class="ghost" aria-label="Đóng">×</button>
+        </div>
+      </div>
+      <div class="hint">
+        Phím <b>↑ ↓ ← →</b> hoặc <b>W A S D</b> để lăn khối · <b>Space</b> đổi cube khi khối đã tách đôi · Kéo chuột để xoay, cuộn để zoom.
+      </div>
     </section>
 
     <aside class="side-panel">
       <h2>Điều khiển</h2>
-      <button id="restartBtn" class="primary">Chơi lại</button>
-      <div class="stat"><span>Hướng khối</span><b id="orientation">Đứng</b></div>
-      <div class="stat"><span>Số nước đi</span><b id="moveCount">0</b></div>
-      <div class="stat"><span>Vị trí neo</span><b id="anchor">(2, 1)</b></div>
+      <label class="field">
+        <span>Màn chơi</span>
+        <select id="levelSelect"></select>
+      </label>
+      <div class="row">
+        <button id="newBtn">New Game</button>
+        <button id="restartBtn" class="primary">Restart</button>
+      </div>
+
+      <h3>Giải tự động</h3>
+      <div class="row solves">
+        <button class="solve" data-algo="bfs">Solve BFS</button>
+        <button class="solve" data-algo="dfs">Solve DFS</button>
+        <button class="solve" data-algo="ids">Solve IDS</button>
+        <button class="solve" data-algo="ucs">Solve UCS</button>
+        <button class="solve" data-algo="astar">Solve A*</button>
+      </div>
+      <div class="row">
+        <button id="replayBtn" disabled>▶ Phát lại lời giải</button>
+        <button id="stopBtn" disabled>■ Dừng</button>
+      </div>
+      <label class="field slider">
+        <span>Tốc độ <b id="speedLabel">1.0×</b></span>
+        <input id="speed" type="range" min="0.25" max="4" step="0.25" value="1" />
+      </label>
+      <div id="solutionBox" class="solution" hidden></div>
+
       <hr />
+      <div class="stat"><span>Trạng thái</span><b id="gameStatus">—</b></div>
+      <div class="stat"><span>Hướng khối</span><b id="orientation">—</b></div>
+      <div class="stat"><span>Số nước đi</span><b id="moveCount">0</b></div>
+      <div class="stat"><span>Vị trí neo</span><b id="anchor">—</b></div>
+
+      <h3>Số liệu lần giải gần nhất</h3>
+      <table id="statsTable" class="stats">
+        <thead>
+          <tr><th>Thuật toán</th><th>Thời gian</th><th>Bộ nhớ</th><th>Node</th><th>Dài</th></tr>
+        </thead>
+        <tbody>
+          <tr class="empty"><td colspan="5">Chưa giải lần nào</td></tr>
+        </tbody>
+      </table>
+      <p class="unit">Thời gian: ms · Bộ nhớ: KB · Node: số node đã mở rộng · Dài: độ dài lời giải</p>
+
       <h3>Chú giải</h3>
-      <div class="legend"><span class="swatch tile"></span> Sàn</div>
-      <div class="legend"><span class="swatch goal"></span> Đích</div>
-      <div class="legend"><span class="swatch block"></span> Khối Bloxorz</div>
-      <p class="note">Bản tuần 1: dữ liệu màn chơi đang là mẫu trong <code>main.js</code>. Chưa nối API Python và chưa xử lý ô đặc biệt.</p>
+      <div class="legend-grid">
+        <div class="legend"><span class="swatch tile"></span> Sàn thường</div>
+        <div class="legend"><span class="swatch goal"></span> Đích (lỗ tối)</div>
+        <div class="legend"><span class="swatch fragile"></span> Ô dễ vỡ</div>
+        <div class="legend"><span class="swatch bridge"></span> Cầu</div>
+        <div class="legend"><span class="swatch soft"></span> Công tắc nhẹ</div>
+        <div class="legend"><span class="swatch heavy">✕</span> Công tắc nặng</div>
+        <div class="legend"><span class="swatch split">[ ]</span> Công tắc tách</div>
+        <div class="legend"><span class="swatch block"></span> Khối / cube</div>
+      </div>
+      <p class="note">Giao diện chỉ vẽ. Luật chơi và lời giải đều do backend Python trả về qua API (xem <code>docs/GUI_API.md</code>).</p>
     </aside>
   </main>
 
   <script src="lib/three.min.js"></script>
   <script src="lib/OrbitControls.js"></script>
+  <script src="api.js"></script>
+  <script src="scene.js"></script>
   <script src="main.js"></script>
 </body>
 </html>
