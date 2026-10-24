@@ -1,22 +1,16 @@
 {
+  "version": 1,
   "id": "L13",
   "grid": [
-    "F..FF...",
-    ".F.FFF..",
-    "..F...FG",
-    ".F.....#",
-    ".#..#.#F",
-    ".#.....F",
-    "...#.FF."
+    "...#...",
+    "...#...",
+    "...#...",
+    "...#..G"
   ],
-  "start": [
-    6,
-    4
+  "start": [0, 0],
+  "legend": {".": "floor", "#": "void", "G": "goal", "F": "fragile"},
+  "switches": [
+    {"cell": [1, 1], "type": "split", "split_to": [[0, 5], [2, 5]]}
   ],
-  "legend": {
-    ".": "floor",
-    "#": "void",
-    "G": "goal",
-    "F": "fragile"
-  }
+  "bridges": []
 }

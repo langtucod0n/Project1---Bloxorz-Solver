@@ -1,22 +1,20 @@
 {
+  "version": 1,
   "id": "L10",
   "grid": [
-    "FFG#FF#.",
-    "F..FFF..",
-    ".F#....F",
-    "...#..#.",
-    ".....F..",
-    ".FF##F.F",
-    "..F..FF."
+    "......",
+    "#.....",
+    "#....#",
+    "...#.#",
+    ".....G"
   ],
-  "start": [
-    2,
-    4
+  "start": [0, 0],
+  "legend": {".": "floor", "#": "void", "G": "goal", "F": "fragile"},
+  "switches": [
+    {"cell": [2, 3], "type": "heavy", "targets": [0], "mode": "open"},
+    {"cell": [2, 4], "type": "soft", "targets": [0], "mode": "close"}
   ],
-  "legend": {
-    ".": "floor",
-    "#": "void",
-    "G": "goal",
-    "F": "fragile"
-  }
+  "bridges": [
+    {"id": 0, "cells": [[4, 3]], "open": false}
+  ]
 }
