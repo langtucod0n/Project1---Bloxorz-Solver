@@ -13,6 +13,8 @@ class WeightedGame:
         self._g = game
 
     def __getattr__(self, name):
+        if name == "_g":
+            raise AttributeError(name)
         return getattr(self._g, name)
 
     def cost(self, s, a, s2):

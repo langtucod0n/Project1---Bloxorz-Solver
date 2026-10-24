@@ -5,7 +5,10 @@ from solvers.costs import path_cost
 from solvers.loader import load_game
 
 REPEATS = 5                                      # lặp để lấy trung vị thời gian
-GROUPS = {"1-Đơn giản": ["L01", "L02", "L03", "L04", "L05"]}   # thêm nhóm khi có màn mới
+GROUPS = {
+    "1-Đơn giản": ["L01", "L02", "L03", "L04", "L05", "L06", "L07", "L08", "L09"],
+    "2-Fragile": ["L10", "L11", "L12", "L13", "L14"],
+}   # thêm nhóm khi có màn mới
 SOLVERS = {"BFS": ("solvers.bfs", "bfs"), "IDS": ("solvers.ids", "ids"), "DFS": ("solvers.dfs", "dfs"),
            "UCS": ("solvers.ucs", "ucs"), "A*": ("solvers.astar", "astar")}
 

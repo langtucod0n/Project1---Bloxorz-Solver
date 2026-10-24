@@ -224,3 +224,10 @@ __pycache__/
 *.mp4
 *.mov
 benchmark/results_tmp/
+*.pyc
+.pytest_cache/
+
+# File dữ liệu kết quả đo lường
+results.csv
+
+Source/docs/figures/*.png
