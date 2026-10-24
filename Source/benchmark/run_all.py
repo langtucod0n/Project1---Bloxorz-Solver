@@ -1,14 +1,20 @@
 """Chạy benchmark. Từ thư mục Source:  python -m benchmark.run_all"""
-import csv, importlib, os, statistics
+import csv, importlib, os, statistics, sys
 from solvers.metrics import run_solver
 from solvers.costs import path_cost
 from solvers.loader import load_game
 
+# Fix encoding cho Windows console
+if sys.stdout.encoding != "utf-8":
+    sys.stdout.reconfigure(encoding="utf-8")
+
 REPEATS = 5                                      # lặp để lấy trung vị thời gian
 GROUPS = {
-    "1-Đơn giản": ["L01", "L02", "L03", "L04", "L05", "L06", "L07", "L08", "L09"],
-    "2-Fragile": ["L10", "L11", "L12", "L13", "L14"],
-}   # thêm nhóm khi có màn mới
+    "1-Đơn giản":      ["L01", "L02", "L03", "L04"],
+    "2-Fragile":        ["L05", "L06", "L07", "L08"],
+    "3-Switch & Cầu":   ["L09", "L10", "L11", "L12"],
+    "4-Kết hợp":        ["L13", "L14", "L15", "L16"],
+}
 SOLVERS = {"BFS": ("solvers.bfs", "bfs"), "IDS": ("solvers.ids", "ids"), "DFS": ("solvers.dfs", "dfs"),
            "UCS": ("solvers.ucs", "ucs"), "A*": ("solvers.astar", "astar")}
 
@@ -44,4 +50,4 @@ def main(out="benchmark/results.csv"):
  
  
 if __name__ == "__main__":
-    main()  
+    main()
