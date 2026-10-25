@@ -97,7 +97,7 @@ Các file `server/app.py`, `server/runner.py`, `solvers/registry.py`. Máy chủ
 | `POST /api/load` | Mở một màn, trả về bàn chơi và vị trí khối ban đầu |
 | `POST /api/move` | Đi một nước (`U`, `D`, `L`, `R`), trả về vị trí mới và đang chơi, thắng hay thua |
 | `POST /api/solve` | Cho máy tự giải bằng `bfs`, `ids` hoặc `dfs`, trả về lời giải và bảng số liệu |
-| `POST /api/switch_control` | Đổi khối điều khiển. Chưa dùng được, hiện trả lỗi 501 |
+| `POST /api/switch_control` | Đổi cube đang điều khiển khi khối đã tách (hành động `S` của `Game`). Trả lỗi 400 nếu khối chưa tách |
 
 Một số điểm cần biết:
 
@@ -178,7 +178,7 @@ Các bài kiểm tra xem:
 ## Chưa làm
 
 - UCS và A* trong `/api/solve`: chờ TV1 thêm `solvers/ucs.py` và `solvers/astar.py`.
-- `POST /api/switch_control`: chờ TV3 làm cơ chế tách khối.
+- `POST /api/switch_control`: đã nối với hành động `S` của TV3; trước đây là stub trả 501 nên lời giải có nước `S` (L14, L15, L16 với A*) bị dừng giữa chừng khi phát lại.
 - Chốt định dạng JSON của trạng thái với TV2, TV3, TV4 và nhóm trưởng.
 - Nối với giao diện 3D trong `web/` (TV4) và thử cùng nhau.
 - Thêm matplotlib vào `requirements.txt` (TV1 thêm khi cần).

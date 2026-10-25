@@ -92,8 +92,15 @@ def move(req: MoveRequest):
 
 @app.post("/api/switch_control")
 def switch_control():
-    # Cơ chế tách khối chưa có trong Game (thuộc TV3).
-    raise HTTPException(501, "Chưa hỗ trợ đổi khối điều khiển.")
+    if session.game is None:
+        raise HTTPException(409, "Chưa nạp màn nào. Gọi /api/load trước.")
+    if session.state.split is None:
+        raise HTTPException(400, "Khối chưa tách, không có cube để đổi.")
+    if session.game.status(session.state) != "PLAYING":
+        raise HTTPException(409, "Ván đã kết thúc. Gọi /api/load để chơi lại.")
+    new_state, status = session.game.step(session.state, "S")
+    session.state = new_state
+    return {"state": state_to_dict(new_state, session.game), "status": status}
 
 
 @app.post("/api/solve")
