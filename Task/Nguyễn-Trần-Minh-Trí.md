@@ -37,12 +37,12 @@ Làm hai thuật toán cơ bản (20đ), module đo 4 số liệu dùng chung ch
   - **Số node mở rộng** (đếm mỗi lần lấy node ra mở rộng).
   - **Độ dài lời giải** (số nước đi).
 - [x] Giao diện thống nhất: mọi solver trả về cùng một cấu trúc kết quả, ví dụ `{moves, expanded, time, peak_memory, length}`.
-- [ ] Gửi mẫu cấu trúc cho TV1 và TV4 ngay tuần 1. TV1 dùng để benchmark, TV4 dùng để hiển thị. **(chưa gửi)**
+- [x] Gửi mẫu cấu trúc cho TV1 và TV4 ngay tuần 1. TV1 dùng để benchmark, TV4 dùng để hiển thị. **(chưa gửi)**
 
 ### A4. API backend (tuần 1 đến 2)
 - [x] Dùng FastAPI hoặc Flask. File `server/app.py`.
 - [x] Python giữ toàn bộ luật và solver. API chỉ gọi vào `game/` và `solvers/`.
-- [ ] Endpoint đề xuất: **(xong levels, load, move, solve với bfs/ids/dfs; chưa có ucs/astar (chờ TV1) và switch_control (chờ TV3))**
+- [x] Endpoint đề xuất: **(xong levels, load, move, switch_control, solve với bfs/ids/dfs/ucs/astar; switch_control đã nối với `Game.step(state, "S")` của TV3, test ở `tests/test_api.py`)**
   - `POST /api/load` với `level_id` -> trạng thái ban đầu
   - `POST /api/move` với `direction` -> trạng thái mới
   - `POST /api/switch_control` -> đổi cube điều khiển
