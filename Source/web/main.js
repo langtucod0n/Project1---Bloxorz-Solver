@@ -8,9 +8,9 @@
   const el = {
     status: $('status'), container: $('game-container'), banner: $('banner'),
     toast: $('toast'), toastText: $('toastText'), toastClose: $('toastClose'),
-    level: $('levelSelect'), newBtn: $('newBtn'), restartBtn: $('restartBtn'),
+    level: $('levelSelect'), prevBtn: $('prevLevel'), nextBtn: $('nextLevel'), newBtn: $('newBtn'), restartBtn: $('restartBtn'),
     replayBtn: $('replayBtn'), stopBtn: $('stopBtn'),
-    speed: $('speed'), speedLabel: $('speedLabel'), solution: $('solutionBox'),
+    relative: $('relativeKeys'), speed: $('speed'), speedLabel: $('speedLabel'), solution: $('solutionBox'),
     gameStatus: $('gameStatus'), orientation: $('orientation'), moveCount: $('moveCount'), anchor: $('anchor'),
     statsBody: document.querySelector('#statsTable tbody')
   };
@@ -63,6 +63,16 @@
     el.stopBtn.disabled = !autoplay;
     el.level.disabled = lock;
     if (!lock) el.replayBtn.disabled = !lastSolution;
+    // nút < > : khóa ở màn đầu / màn cuối
+    el.prevBtn.disabled = lock || el.level.selectedIndex <= 0;
+    el.nextBtn.disabled = lock || el.level.selectedIndex >= el.level.options.length - 1;
+  }
+
+  function stepLevel(delta) {
+    const i = el.level.selectedIndex + delta;
+    if (i < 0 || i >= el.level.options.length) return;
+    el.level.selectedIndex = i;
+    guarded(() => loadLevel(el.level.value));
   }
 
   function updatePanel() {
@@ -226,14 +236,23 @@
   }
 
   /* ---------------- su kien ---------------- */
-  const KEYMAP = {
-    arrowup: 'U', w: 'U', arrowdown: 'D', s: 'D', arrowleft: 'L', a: 'L', arrowright: 'R', d: 'R', ' ': 'S'
+  // Phím -> vị trí trên màn hình (0 lên, 1 phải, 2 xuống, 3 trái), rồi xoay theo góc nhìn camera.
+  const FWD = ['U', 'R', 'D', 'L'];     // hướng lưới theo chiều kim đồng hồ, bắt đầu từ "lên"
+  const KEY_SLOT = {
+    arrowup: 0, w: 0, arrowright: 1, d: 1, arrowdown: 2, s: 2, arrowleft: 3, a: 3
   };
+  function keyToDir(key) {
+    if (key === ' ') return 'S';
+    const slot = KEY_SLOT[key];
+    if (slot === undefined) return null;
+    const k = el.relative.checked ? view.viewQuarter() : 0;
+    return FWD[(k + slot) % 4];
+  }
 
   window.addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.target && e.target.tagName === 'SELECT') return;
-    const dir = KEYMAP[e.key.toLowerCase()];
+    const dir = keyToDir(e.key.toLowerCase());
     if (!dir) return;
     e.preventDefault();
     if (autoplay || !state || state.status !== 'playing') return;
@@ -248,6 +267,8 @@
   });
 
   el.level.addEventListener('change', () => { el.level.blur(); guarded(() => loadLevel(el.level.value)); });
+  el.prevBtn.addEventListener('click', () => stepLevel(-1));
+  el.nextBtn.addEventListener('click', () => stepLevel(1));
   el.newBtn.addEventListener('click', () => guarded(() => loadLevel(el.level.value)));
   el.restartBtn.addEventListener('click', () => guarded(async () => { await restart(); renderSolution(null); }));
   solveBtns.forEach((b) => b.addEventListener('click', () => guarded(() => solve(b.dataset.algo))));
@@ -256,6 +277,7 @@
     await restart();
     await play(lastSolution.moves);
   }));
+  el.relative.addEventListener('change', () => el.relative.blur());
   el.stopBtn.addEventListener('click', () => { stopRequested = true; });
   el.speed.addEventListener('input', () => {
     view.speed = parseFloat(el.speed.value);
