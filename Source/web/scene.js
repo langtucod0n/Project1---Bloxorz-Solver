@@ -573,8 +573,18 @@
       renderer.render(scene, camera);
     });
 
+    /* Camera đang nhìn về hướng nào của lưới? 0 = hướng U (lên), 1 = R, 2 = D, 3 = L.
+       Chỉ dùng để đổi nghĩa phím mũi tên theo góc nhìn (không phải luật chơi). */
+    function viewQuarter() {
+      const fx = controls.target.x - camera.position.x;
+      const fz = controls.target.z - camera.position.z;
+      const theta = Math.atan2(fx, -fz);
+      const k = Math.floor((theta + Math.PI / 4 + 0.01) / (Math.PI / 2));
+      return ((k % 4) + 4) % 4;
+    }
+
     Object.assign(view, {
-      loadLevel, setState, animateMove, animateSwitch,
+      loadLevel, setState, animateMove, animateSwitch, viewQuarter,
       resetCamera: () => { if (level) frameCamera(); },
       get hasLevel() { return !!level; }
     });

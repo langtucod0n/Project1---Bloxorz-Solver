@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bloxorz Solver - TV4</title>
+  <title>Bloxorz Solver - Nhóm 9</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="topbar">
     <div>
-      <p class="eyebrow">TV4 · THREE.JS</p>
+      <p class="eyebrow">NHÓM 9 · 24120368 - 24120471 - 24120448 - 24120355 - 24120374</p>
       <h1>Bloxorz Solver</h1>
     </div>
     <div id="status" class="status">Đang tải…</div>
@@ -26,20 +26,27 @@
         </div>
       </div>
       <div class="hint">
-        Phím <b>↑ ↓ ← →</b> hoặc <b>W A S D</b> để lăn khối · <b>Space</b> đổi cube khi khối đã tách đôi · Kéo chuột để xoay, cuộn để zoom.
+        Phím <b>↑ ↓ ← →</b> hoặc <b>W A S D</b> để lăn khối (↑ = hướng đi lên màn hình, theo góc nhìn) · <b>Space</b> đổi cube khi khối đã tách đôi · Kéo chuột để xoay, cuộn để zoom.
       </div>
     </section>
 
     <aside class="side-panel">
       <h2>Điều khiển</h2>
-      <label class="field">
+      <div class="field">
         <span>Màn chơi</span>
-        <select id="levelSelect"></select>
-      </label>
+        <div class="level-row">
+          <button id="prevLevel" type="button" aria-label="Màn chơi trước" title="Màn trước">&lt;</button>
+          <select id="levelSelect"></select>
+          <button id="nextLevel" type="button" aria-label="Màn chơi sau" title="Màn sau">&gt;</button>
+        </div>
+      </div>
       <div class="row">
         <button id="newBtn">New Game</button>
         <button id="restartBtn" class="primary">Restart</button>
       </div>
+      <label class="field" style="display:flex;gap:8px;align-items:center;cursor:pointer">
+        <input type="checkbox" id="relativeKeys" checked /> Phím điều hướng theo góc nhìn camera
+      </label>
 
       <h3>Giải tự động</h3>
       <div class="row solves">
@@ -87,7 +94,6 @@
         <div class="legend"><span class="swatch split">[ ]</span> Công tắc tách</div>
         <div class="legend"><span class="swatch block"></span> Khối / cube</div>
       </div>
-      <p class="note">Giao diện chỉ vẽ. Luật chơi và lời giải đều do backend Python trả về qua API (xem <code>docs/GUI_API.md</code>).</p>
     </aside>
   </main>
 
