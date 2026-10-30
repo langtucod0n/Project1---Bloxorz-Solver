@@ -1,5 +1,12 @@
 """Chạy benchmark. Từ thư mục Source:  python -m benchmark.run_all"""
 import csv, importlib, os, statistics, sys
+from pathlib import Path
+
+# Đảm bảo import được module solvers dù chạy từ bất kỳ thư mục nào
+SOURCE_DIR = Path(__file__).resolve().parents[1]
+if str(SOURCE_DIR) not in sys.path:
+    sys.path.insert(0, str(SOURCE_DIR))
+
 from solvers.metrics import run_solver
 from solvers.costs import path_cost
 from solvers.loader import load_game
@@ -27,7 +34,9 @@ def get_solvers():
             print(f"[bỏ qua] không tìm thấy {mod}.{fn}")
     return found
 
-def main(out="benchmark/results.csv"):
+DEFAULT_OUT = Path(__file__).resolve().parent / "results.csv"
+
+def main(out=DEFAULT_OUT):
     solvers = get_solvers()
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", newline="", encoding="utf-8-sig") as f:

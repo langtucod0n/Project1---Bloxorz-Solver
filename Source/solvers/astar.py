@@ -2,10 +2,10 @@ import heapq
 import itertools
 
 from solvers.costs import weighted
-from solvers.heuristics import h_manhattan_half
+from solvers.heuristics import h_manhattan_half, h_combined
 from solvers.ucs import _build_path
 
-def astar(game, h=h_manhattan_half, start=None):
+def astar(game, h=h_combined, start=None):
     """Trả về {"moves": [...] hoặc None, "expanded": số}."""
     game = weighted(game)
     start = game.initial_state() if start is None else start

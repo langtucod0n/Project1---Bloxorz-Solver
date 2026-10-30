@@ -1,5 +1,6 @@
 """Vẽ biểu đồ từ results.csv. Từ thư mục Source:  python -m benchmark.plot"""
 import csv, os, sys
+from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -8,10 +9,17 @@ import matplotlib.pyplot as plt
 if sys.stdout.encoding != "utf-8":
     sys.stdout.reconfigure(encoding="utf-8")
 
+SOURCE_DIR = Path(__file__).resolve().parents[1]
+if str(SOURCE_DIR) not in sys.path:
+    sys.path.insert(0, str(SOURCE_DIR))
+
+DEFAULT_SRC = Path(__file__).resolve().parent / "results.csv"
+DEFAULT_OUTDIR = SOURCE_DIR / "docs" / "figures"
+
 METRICS = {"time_s": "Thời gian (giây)", "peak_memory_bytes": "Bộ nhớ đỉnh (byte)",
            "expanded": "Số node mở rộng", "length": "Độ dài lời giải (số nước)", "cost": "Tổng chi phí"}
 
-def main(src="benchmark/results.csv", outdir="docs/figures"):
+def main(src=DEFAULT_SRC, outdir=DEFAULT_OUTDIR):
     os.makedirs(outdir, exist_ok=True)
     rows = list(csv.DictReader(open(src, encoding="utf-8-sig")))
     levels = list(dict.fromkeys(r["level"] for r in rows))
