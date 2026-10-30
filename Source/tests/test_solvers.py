@@ -2,7 +2,10 @@
 
 Chạy: cd Source && pytest tests/test_solvers.py -v
 """
+import heapq
 import pytest
+from collections import deque
+
 from solvers.loader import load_game
 from solvers.bfs import bfs
 from solvers.ucs import ucs
@@ -19,6 +22,58 @@ def replay(game, moves):
     for m in moves:
         s = game.result(s, m)
     return s
+
+
+def _build_graph_and_hstar(game):
+    """Xây đồ thị trạng thái đầy đủ, rồi tính h*(s) bằng Dijkstra ngược từ goal.
+
+    Trả về (hstar: dict[State, float], edges: list[(s, a, s', cost)], g: WeightedGame).
+    hstar[s] = chi phí tối ưu từ s đến goal (theo WeightedGame).
+    """
+    g = weighted(game)
+    start = g.initial_state()
+
+    # BFS tìm tất cả trạng thái reachable và cạnh
+    visited = {start}
+    queue = deque([start])
+    edges = []
+    while queue:
+        s = queue.popleft()
+        for a in g.actions(s):
+            s2 = g.result(s, a)
+            c = g.cost(s, a, s2)
+            edges.append((s, a, s2, c))
+            if s2 not in visited:
+                visited.add(s2)
+                queue.append(s2)
+
+    # Xây đồ thị ngược: s' -> [(s, cost)]
+    reverse = {}
+    for s, a, s2, c in edges:
+        reverse.setdefault(s2, []).append((s, c))
+
+    # Dijkstra ngược từ goal
+    goals = [s for s in visited if g.is_goal(s)]
+    hstar = {}
+    counter = 0
+    heap = []
+    for goal in goals:
+        hstar[goal] = 0.0
+        counter += 1
+        heapq.heappush(heap, (0.0, counter, goal))
+
+    while heap:
+        cost, _, s = heapq.heappop(heap)
+        if cost > hstar.get(s, float("inf")):
+            continue
+        for pred, c in reverse.get(s, []):
+            new_cost = cost + c
+            if new_cost < hstar.get(pred, float("inf")):
+                hstar[pred] = new_cost
+                counter += 1
+                heapq.heappush(heap, (new_cost, counter, pred))
+
+    return hstar, edges, g
 
 
 ALL_LEVELS = [f"L{i:02d}" for i in range(1, 17)]
@@ -199,7 +254,7 @@ def test_combined_levels(lid):
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# 12. Heuristic admissible: h(start) <= chi phí tối ưu thực tế
+# 12. Heuristic admissible: h(start) ≤ chi phí tối ưu thực tế
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @pytest.mark.parametrize("lid", SIMPLE_LEVELS + FRAGILE_LEVELS)
@@ -233,9 +288,10 @@ def test_heuristic_admissible_combined(lid):
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # 13. h_combined >= h_manhattan_half (heuristic mới chặt hơn hoặc bằng)
+#     Chỉ kiểm tra trên start state (split state xử lý khác)
 # ═══════════════════════════════════════════════════════════════════════════════
 
-@pytest.mark.parametrize("lid", ALL_LEVELS)
+@pytest.mark.parametrize("lid", SIMPLE_LEVELS + FRAGILE_LEVELS + SWITCH_LEVELS)
 def test_combined_geq_manhattan(lid):
     game = load_game(lid)
     g = weighted(game)
@@ -245,3 +301,37 @@ def test_combined_geq_manhattan(lid):
     assert h2 >= h1, (
         f"{lid}: h_combined(start)={h2} < h_manhattan_half(start)={h1}"
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 14. [QUAN TRỌNG] Admissible trên MỌI trạng thái reachable
+#     h(s) ≤ h*(s) cho tất cả s, dùng Dijkstra ngược từ goal
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@pytest.mark.parametrize("lid", ALL_LEVELS)
+def test_h_combined_admissible_all_states(lid):
+    game = load_game(lid)
+    hstar, _, g = _build_graph_and_hstar(game)
+    for s, opt in hstar.items():
+        h_val = h_combined(g, s)
+        assert h_val <= opt + 1e-9, (
+            f"{lid}: h_combined({s})={h_val} > h*={opt} → NOT admissible!"
+        )
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 15. [QUAN TRỌNG] Consistent trên MỌI cạnh
+#     h(s) ≤ cost(s, a, s') + h(s') cho tất cả cạnh (s, a, s')
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@pytest.mark.parametrize("lid", ALL_LEVELS)
+def test_h_combined_consistent_all_edges(lid):
+    game = load_game(lid)
+    _, edges, g = _build_graph_and_hstar(game)
+    for s, a, s2, c in edges:
+        h_s = h_combined(g, s)
+        h_s2 = h_combined(g, s2)
+        assert h_s <= c + h_s2 + 1e-9, (
+            f"{lid}: h({s})={h_s} > cost={c} + h({s2})={h_s2} → NOT consistent! "
+            f"action={a}"
+        )

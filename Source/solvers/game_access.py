@@ -12,3 +12,12 @@ def goal_pos(game):
 
 def is_split(s):
     return getattr(s, "split", None) is not None
+
+def split_switches(game):
+    """Trả về dict: ô công tắc split -> (vị trí cube 0, vị trí cube 1).
+    Rỗng nếu màn không có split switch. Hoạt động cả với WeightedGame."""
+    return getattr(game, '_split_at', {})
+
+def bridge_cells(game):
+    """Tập mọi ô thuộc một cầu (bất kể đang đóng hay mở). Hoạt động cả với WeightedGame."""
+    return set(getattr(game, '_bridge_of', {}))
